@@ -43,6 +43,8 @@ final class Plugin {
 		new CPT();
 		new Notes_CPT();
 		new Admin\Notes_Meta_Boxes();
+		new Course_CPT();
+		new Admin\Course_Meta_Boxes();
 
 		// Elementor & Frontend asset hooks.
 		add_action( 'elementor/elements/categories_registered', [ $this, 'register_categories' ] );
@@ -56,6 +58,10 @@ final class Plugin {
 		// AJAX Handler for CPT query.
 		add_action( 'wp_ajax_pp_query_problems', [ $this, 'ajax_query_problems' ] );
 		add_action( 'wp_ajax_nopriv_pp_query_problems', [ $this, 'ajax_query_problems' ] );
+
+		// AJAX Handler for Course Listing query.
+		add_action( 'wp_ajax_cl_query_courses', [ $this, 'ajax_query_courses' ] );
+		add_action( 'wp_ajax_nopriv_cl_query_courses', [ $this, 'ajax_query_courses' ] );
 	}
 
 	/**
@@ -82,10 +88,12 @@ final class Plugin {
 		require_once PRACTICE_PROBLEMS_PATH . 'includes/widgets/class-practice-problems-widget.php';
 		require_once PRACTICE_PROBLEMS_PATH . 'includes/widgets/class-topic-notes-widget.php';
 		require_once PRACTICE_PROBLEMS_PATH . 'includes/widgets/class-topic-notes-grid-widget.php';
+		require_once PRACTICE_PROBLEMS_PATH . 'includes/widgets/class-course-listing-widget.php';
 
 		$widgets_manager->register( new Widgets\Practice_Problems_Widget() );
 		$widgets_manager->register( new Widgets\Topic_Notes_Widget() );
 		$widgets_manager->register( new Widgets\Topic_Notes_Grid_Widget() );
+		$widgets_manager->register( new Widgets\Course_Listing_Widget() );
 	}
 
 	/**
@@ -102,6 +110,13 @@ final class Plugin {
 		wp_register_style(
 			'topic-notes-frontend',
 			PRACTICE_PROBLEMS_URL . 'assets/css/topic-notes-frontend.css',
+			[],
+			PRACTICE_PROBLEMS_VERSION
+		);
+
+		wp_register_style(
+			'course-listing-frontend',
+			PRACTICE_PROBLEMS_URL . 'assets/css/course-listing-frontend.css',
 			[],
 			PRACTICE_PROBLEMS_VERSION
 		);
@@ -127,12 +142,29 @@ final class Plugin {
 			true
 		);
 
+		wp_register_script(
+			'course-listing-frontend',
+			PRACTICE_PROBLEMS_URL . 'assets/js/course-listing-frontend.js',
+			[ 'jquery', 'elementor-frontend' ],
+			PRACTICE_PROBLEMS_VERSION,
+			true
+		);
+
 		wp_localize_script(
 			'practice-problems-frontend',
 			'PracticeProblemsConfig',
 			[
 				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 				'nonce'   => wp_create_nonce( 'practice_problems_nonce' ),
+			]
+		);
+
+		wp_localize_script(
+			'course-listing-frontend',
+			'CourseListingConfig',
+			[
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'course_listing_nonce' ),
 			]
 		);
 	}
@@ -228,6 +260,104 @@ final class Plugin {
 	}
 
 	/**
+	 * AJAX endpoint to query courses with combined search and level filter.
+	 */
+	public function ajax_query_courses() {
+		check_ajax_referer( 'course_listing_nonce', 'nonce' );
+
+		$search        = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
+		$level         = isset( $_POST['level'] ) ? sanitize_text_field( wp_unslash( $_POST['level'] ) ) : '';
+		$page          = isset( $_POST['page'] ) ? max( 1, intval( $_POST['page'] ) ) : 1;
+		$per_page      = isset( $_POST['per_page'] ) ? max( 1, intval( $_POST['per_page'] ) ) : 6;
+		$orderby       = isset( $_POST['orderby'] ) ? sanitize_text_field( wp_unslash( $_POST['orderby'] ) ) : 'course_order';
+		$order         = isset( $_POST['order'] ) ? sanitize_text_field( wp_unslash( $_POST['order'] ) ) : 'ASC';
+		$exclude_ids   = isset( $_POST['exclude_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['exclude_ids'] ) ) : '';
+		$categories    = isset( $_POST['categories'] ) && is_array( $_POST['categories'] ) ? array_map( 'sanitize_text_field', $_POST['categories'] ) : [];
+		$levels_limit  = isset( $_POST['levels'] ) && is_array( $_POST['levels'] ) ? array_map( 'sanitize_text_field', $_POST['levels'] ) : [];
+		$card_settings = isset( $_POST['card_settings'] ) && is_array( $_POST['card_settings'] ) ? $_POST['card_settings'] : [];
+
+		$args = [
+			'post_type'      => 'course',
+			'post_status'    => 'publish',
+			'posts_per_page' => $per_page,
+			'paged'          => $page,
+		];
+
+		// Sorting
+		if ( 'course_order' === $orderby ) {
+			$args['meta_key'] = '_course_display_order';
+			$args['orderby']  = 'meta_value_num date';
+			$args['order']    = $order;
+		} else {
+			$args['orderby'] = $orderby;
+			$args['order']   = $order;
+		}
+
+		// Combined Tax Query: Level + Categories (AND logic)
+		$tax_query = [];
+		if ( ! empty( $level ) && 'all' !== $level ) {
+			$tax_query[] = [
+				'taxonomy' => 'course_level',
+				'field'    => 'slug',
+				'terms'    => sanitize_title( $level ),
+			];
+		} elseif ( ! empty( $levels_limit ) ) {
+			$tax_query[] = [
+				'taxonomy' => 'course_level',
+				'field'    => 'slug',
+				'terms'    => $levels_limit,
+			];
+		}
+
+		if ( ! empty( $categories ) ) {
+			$tax_query[] = [
+				'taxonomy' => 'course_category',
+				'field'    => 'slug',
+				'terms'    => $categories,
+			];
+		}
+
+		if ( count( $tax_query ) > 1 ) {
+			$tax_query['relation'] = 'AND';
+		}
+
+		if ( ! empty( $tax_query ) ) {
+			$args['tax_query'] = $tax_query;
+		}
+
+		// Search keywords
+		if ( ! empty( $search ) ) {
+			$args['s'] = $search;
+		}
+
+		// Exclude IDs
+		if ( ! empty( $exclude_ids ) ) {
+			$ids = array_map( 'intval', array_map( 'trim', explode( ',', $exclude_ids ) ) );
+			$args['post__not_in'] = $ids;
+		}
+
+		$query = new \WP_Query( $args );
+		$html  = '';
+
+		if ( $query->have_posts() ) {
+			ob_start();
+			while ( $query->have_posts() ) {
+				$query->the_post();
+				Widgets\Course_Listing_Widget::render_course_card( get_the_ID(), $card_settings );
+			}
+			$html = ob_get_clean();
+			wp_reset_postdata();
+		}
+
+		wp_send_json_success( [
+			'html'        => $html,
+			'total'       => $query->found_posts,
+			'total_pages' => $query->max_num_pages,
+			'page'        => $page,
+		] );
+	}
+
+	/**
 	 * Ensure Elementor enables editing support for custom post types.
 	 */
 	public function ensure_elementor_cpt_support() {
@@ -236,7 +366,7 @@ final class Plugin {
 			$cpt_support = [ 'page', 'post' ];
 		}
 		$updated = false;
-		foreach ( [ 'math_note', 'practice_problem' ] as $type ) {
+		foreach ( [ 'math_note', 'practice_problem', 'course' ] as $type ) {
 			if ( ! in_array( $type, $cpt_support, true ) ) {
 				$cpt_support[] = $type;
 				$updated = true;
