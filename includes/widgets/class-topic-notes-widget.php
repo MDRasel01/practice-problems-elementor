@@ -2148,6 +2148,9 @@ class Topic_Notes_Widget extends Widget_Base {
 		$next_post = get_next_post();
 		$prev_override = get_post_meta( $note_id, '_mn_prev_override', true );
 		$next_override = get_post_meta( $note_id, '_mn_next_override', true );
+
+		$topic_page = get_page_by_path( 'topic-note' );
+		$base_topic_url = ( $topic_page && 'publish' === $topic_page->post_status ) ? get_permalink( $topic_page->ID ) : home_url( '/topic-note/' );
 		?>
 
 		<div class="tn-widget-container">
@@ -2330,7 +2333,7 @@ class Topic_Notes_Widget extends Widget_Base {
 						<nav class="tn-nav-container" aria-label="<?php esc_attr_e( 'Topic navigation', 'practice-problems-el' ); ?>">
 							<?php if ( ! empty( $prev_override ) || ! empty( $prev_post ) ) : 
 								$p_title = ! empty( $prev_override ) ? $prev_override : get_the_title( $prev_post );
-								$p_link  = ! empty( $prev_post ) ? get_permalink( $prev_post ) : '#';
+								$p_link  = ! empty( $prev_post ) ? add_query_arg( 'note', $prev_post->post_name, $base_topic_url ) : '#';
 							?>
 								<a href="<?php echo esc_url( $p_link ); ?>" class="tn-nav-card prev">
 									<span class="tn-nav-sub">← <?php echo esc_html( $s['prev_topic_label'] ); ?></span>
@@ -2342,7 +2345,7 @@ class Topic_Notes_Widget extends Widget_Base {
 
 							<?php if ( ! empty( $next_override ) || ! empty( $next_post ) ) : 
 								$n_title = ! empty( $next_override ) ? $next_override : get_the_title( $next_post );
-								$n_link  = ! empty( $next_post ) ? get_permalink( $next_post ) : '#';
+								$n_link  = ! empty( $next_post ) ? add_query_arg( 'note', $next_post->post_name, $base_topic_url ) : '#';
 							?>
 								<a href="<?php echo esc_url( $n_link ); ?>" class="tn-nav-card next">
 									<span class="tn-nav-sub"><?php echo esc_html( $s['next_topic_label'] ); ?> →</span>
