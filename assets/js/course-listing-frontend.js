@@ -18,7 +18,7 @@
 			this.$searchInput     = this.$container.find('.cl-search-input');
 			this.$searchClear     = this.$container.find('.cl-search-clear');
 			this.$filterBtns      = this.$container.find('.cl-filter-btn');
-			this.$coursesGrid     = this.$container.find('.cl-courses-grid');
+			this.$coursesGrid     = this.$container.find('.cl-main-grid').length ? this.$container.find('.cl-main-grid') : this.$container.children('.cl-courses-grid');
 			this.$skeleton        = this.$container.find('.cl-loading-skeleton');
 			this.$emptyState      = this.$container.find('.cl-empty-state');
 			this.$resetBtn        = this.$container.find('.cl-empty-reset-btn');
