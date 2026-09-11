@@ -265,6 +265,10 @@ final class Plugin {
 	public function ajax_query_courses() {
 		check_ajax_referer( 'course_listing_nonce', 'nonce' );
 
+		if ( ! class_exists( 'PracticeProblems\Widgets\Course_Listing_Widget' ) ) {
+			require_once PRACTICE_PROBLEMS_PATH . 'includes/widgets/class-course-listing-widget.php';
+		}
+
 		$search        = isset( $_POST['search'] ) ? sanitize_text_field( wp_unslash( $_POST['search'] ) ) : '';
 		$level         = isset( $_POST['level'] ) ? sanitize_text_field( wp_unslash( $_POST['level'] ) ) : '';
 		$page          = isset( $_POST['page'] ) ? max( 1, intval( $_POST['page'] ) ) : 1;
