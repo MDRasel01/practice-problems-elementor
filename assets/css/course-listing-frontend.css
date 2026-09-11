@@ -41,6 +41,18 @@
 		flex-direction: row;
 		align-items: center;
 		justify-content: space-between;
+		flex-wrap: nowrap;
+		gap: 20px;
+	}
+	.cl-search-wrapper {
+		flex: 0 1 380px;
+		max-width: 440px;
+		min-width: 200px;
+	}
+	.cl-filter-nav {
+		flex-shrink: 0;
+		margin-left: auto;
+		overflow: visible;
 	}
 }
 
@@ -132,22 +144,25 @@
 	flex-wrap: wrap;
 }
 
-/* Mobile Scroll Layout */
-.cl-filter-nav.cl-overflow-scroll {
-	flex-wrap: nowrap;
-	overflow-x: auto;
-	-webkit-overflow-scrolling: touch;
-	scrollbar-width: none; /* Firefox */
-	padding-bottom: 4px;
-}
+/* Mobile Scroll Layout (Active ONLY on Mobile Devices) */
+@media (max-width: 767px) {
+	.cl-filter-nav.cl-overflow-scroll {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none; /* Firefox */
+		padding-bottom: 4px;
+	}
 
-.cl-filter-nav.cl-overflow-scroll::-webkit-scrollbar {
-	display: none; /* Chrome/Safari */
+	.cl-filter-nav.cl-overflow-scroll::-webkit-scrollbar {
+		display: none; /* Chrome/Safari */
+	}
 }
 
 .cl-filter-btn {
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
 	gap: 8px;
 	padding: 8px 18px;
 	font-size: 14px;
@@ -159,7 +174,8 @@
 	cursor: pointer;
 	white-space: nowrap;
 	text-decoration: none;
-	transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+	box-sizing: border-box;
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .cl-filter-btn:hover {
@@ -177,7 +193,7 @@
 	color: #ffffff;
 	background-color: var(--cl-primary);
 	border-color: var(--cl-primary);
-	font-weight: 600;
+	font-weight: 500;
 	box-shadow: 0 2px 8px rgba(35, 142, 35, 0.25);
 }
 
@@ -206,6 +222,7 @@
 	grid-template-columns: repeat(3, minmax(0, 1fr));
 	gap: 24px;
 	transition: opacity 0.2s ease;
+	min-height: 200px;
 }
 
 @media (max-width: 991px) {
@@ -217,6 +234,80 @@
 @media (max-width: 640px) {
 	.cl-courses-grid {
 		grid-template-columns: 1fr;
+	}
+}
+
+/* ==========================================================================
+   Skeleton Shimmer Placeholders
+   ========================================================================== */
+.cl-loading-skeleton {
+	width: 100%;
+}
+
+.cl-skeleton-card {
+	display: flex;
+	flex-direction: column;
+	background: var(--cl-card-bg, #ffffff);
+	border: 1px solid var(--cl-border, #e2e8f0);
+	border-radius: var(--cl-radius, 12px);
+	overflow: hidden;
+	height: 380px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.cl-skeleton-thumb {
+	width: 100%;
+	height: 190px;
+	background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+	background-size: 200% 100%;
+	animation: clShimmer 1.5s infinite;
+}
+
+.cl-skeleton-body {
+	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	flex: 1;
+}
+
+.cl-skeleton-pill {
+	width: 70px;
+	height: 20px;
+	border-radius: 12px;
+	background: #e2e8f0;
+}
+
+.cl-skeleton-line {
+	height: 14px;
+	border-radius: 4px;
+	background: #e2e8f0;
+}
+
+.cl-skeleton-line.cl-line-title {
+	width: 80%;
+	height: 20px;
+}
+
+.cl-skeleton-line.cl-line-desc {
+	width: 95%;
+	height: 32px;
+}
+
+.cl-skeleton-meta {
+	width: 60%;
+	height: 14px;
+	border-radius: 4px;
+	background: #e2e8f0;
+	margin-top: auto;
+}
+
+@keyframes clShimmer {
+	0% {
+		background-position: 200% 0;
+	}
+	100% {
+		background-position: -200% 0;
 	}
 }
 
