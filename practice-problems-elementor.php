@@ -3,7 +3,7 @@
  * Plugin Name: Practice Problems for Elementor
  * Plugin URI:  https://example.com/practice-problems-elementor
  * Description: A production-grade, 100% customizable Practice Problems widget with interactive filtering, step-by-step solution accordions, multi-style pagination, and dynamic data support.
- * Version:     1.0.0
+ * Version:     1.0.1
  * Author:      Senior Elementor Plugin Engineer
  * Author URI:  https://example.com
  * Text Domain: practice-problems-el
@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
 
-define( 'PRACTICE_PROBLEMS_VERSION', '1.0.0' );
+define( 'PRACTICE_PROBLEMS_VERSION', '1.0.1' );
 define( 'PRACTICE_PROBLEMS_FILE', __FILE__ );
 define( 'PRACTICE_PROBLEMS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PRACTICE_PROBLEMS_URL', plugin_dir_url( __FILE__ ) );
