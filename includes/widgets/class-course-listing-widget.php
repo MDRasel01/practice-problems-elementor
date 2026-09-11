@@ -89,6 +89,117 @@ class Course_Listing_Widget extends Widget_Base {
 	protected function register_controls() {
 
 		/* =========================================================
+		   CONTENT TAB — Grid Layout (Columns & Rows)
+		========================================================= */
+		$this->start_controls_section(
+			'section_layout',
+			[
+				'label' => esc_html__( 'Grid Layout', 'practice-problems-el' ),
+				'tab'   => Controls_Manager::TAB_CONTENT,
+			]
+		);
+
+		$this->add_responsive_control(
+			'grid_columns',
+			[
+				'label'          => esc_html__( 'Columns', 'practice-problems-el' ),
+				'type'           => Controls_Manager::SELECT,
+				'default'        => '3',
+				'tablet_default' => '2',
+				'mobile_default' => '1',
+				'options'        => [
+					'1' => esc_html__( '1 Column', 'practice-problems-el' ),
+					'2' => esc_html__( '2 Columns', 'practice-problems-el' ),
+					'3' => esc_html__( '3 Columns', 'practice-problems-el' ),
+					'4' => esc_html__( '4 Columns', 'practice-problems-el' ),
+					'5' => esc_html__( '5 Columns', 'practice-problems-el' ),
+					'6' => esc_html__( '6 Columns', 'practice-problems-el' ),
+				],
+				'selectors'      => [
+					'{{WRAPPER}} .cl-courses-grid' => 'grid-template-columns: repeat({{VALUE}}, minmax(0, 1fr));',
+				],
+			]
+		);
+
+		$this->add_control(
+			'limit_by',
+			[
+				'label'       => esc_html__( 'Number of Courses By', 'practice-problems-el' ),
+				'type'        => Controls_Manager::SELECT,
+				'default'     => 'rows',
+				'render_type' => 'template',
+				'options'     => [
+					'rows'   => esc_html__( 'Columns × Rows', 'practice-problems-el' ),
+					'custom' => esc_html__( 'Custom Count', 'practice-problems-el' ),
+				],
+			]
+		);
+
+		$this->add_control(
+			'grid_rows',
+			[
+				'label'       => esc_html__( 'Rows', 'practice-problems-el' ),
+				'type'        => Controls_Manager::NUMBER,
+				'default'     => 2,
+				'min'         => 1,
+				'max'         => 12,
+				'step'        => 1,
+				'render_type' => 'template',
+				'condition'   => [ 'limit_by' => 'rows' ],
+				'description' => esc_html__( 'Number of rows to show. (Total Courses = Columns × Rows)', 'practice-problems-el' ),
+			]
+		);
+
+		$this->add_control(
+			'posts_per_page',
+			[
+				'label'       => esc_html__( 'Courses Per Page', 'practice-problems-el' ),
+				'type'        => Controls_Manager::NUMBER,
+				'default'     => 6,
+				'min'         => 1,
+				'max'         => 60,
+				'step'        => 1,
+				'render_type' => 'template',
+				'condition'   => [ 'limit_by' => 'custom' ],
+				'description' => esc_html__( 'Custom number of courses to display per page.', 'practice-problems-el' ),
+			]
+		);
+
+		$this->add_responsive_control(
+			'column_gap',
+			[
+				'label'      => esc_html__( 'Columns Gap', 'practice-problems-el' ),
+				'type'       => Controls_Manager::SLIDER,
+				'size_units' => [ 'px', 'em', 'rem' ],
+				'range'      => [
+					'px' => [ 'min' => 0, 'max' => 60 ],
+				],
+				'default'    => [ 'unit' => 'px', 'size' => 24 ],
+				'selectors'  => [
+					'{{WRAPPER}} .cl-courses-grid' => 'column-gap: {{SIZE}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'row_gap',
+			[
+				'label'      => esc_html__( 'Rows Gap', 'practice-problems-el' ),
+				'type'       => Controls_Manager::SLIDER,
+				'size_units' => [ 'px', 'em', 'rem' ],
+				'range'      => [
+					'px' => [ 'min' => 0, 'max' => 60 ],
+				],
+				'default'    => [ 'unit' => 'px', 'size' => 24 ],
+				'selectors'  => [
+					'{{WRAPPER}} .cl-courses-grid' => 'row-gap: {{SIZE}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->end_controls_section();
+
+		/* =========================================================
 		   CONTENT TAB — Query
 		========================================================= */
 		$this->start_controls_section(
@@ -96,18 +207,6 @@ class Course_Listing_Widget extends Widget_Base {
 			[
 				'label' => esc_html__( 'Course Query', 'practice-problems-el' ),
 				'tab'   => Controls_Manager::TAB_CONTENT,
-			]
-		);
-
-		$this->add_control(
-			'posts_per_page',
-			[
-				'label'   => esc_html__( 'Courses Per Page', 'practice-problems-el' ),
-				'type'    => Controls_Manager::NUMBER,
-				'default' => 6,
-				'min'     => 1,
-				'max'     => 60,
-				'step'    => 1,
 			]
 		);
 
@@ -1600,7 +1699,15 @@ class Course_Listing_Widget extends Widget_Base {
 	 * Build WP_Query args based on widget settings.
 	 */
 	public function get_query_args( $settings, $paged = 1, $search = '', $active_level = '' ) {
-		$posts_per_page = ! empty( $settings['posts_per_page'] ) ? intval( $settings['posts_per_page'] ) : 6;
+		if ( isset( $settings['limit_by'] ) && 'custom' === $settings['limit_by'] ) {
+			$posts_per_page = ! empty( $settings['posts_per_page'] ) ? intval( $settings['posts_per_page'] ) : 6;
+		} elseif ( isset( $settings['limit_by'] ) && 'rows' === $settings['limit_by'] ) {
+			$cols = ! empty( $settings['grid_columns'] ) ? intval( $settings['grid_columns'] ) : 3;
+			$rows = ! empty( $settings['grid_rows'] ) ? intval( $settings['grid_rows'] ) : 2;
+			$posts_per_page = max( 1, $cols * $rows );
+		} else {
+			$posts_per_page = ! empty( $settings['posts_per_page'] ) ? intval( $settings['posts_per_page'] ) : 6;
+		}
 		$orderby        = ! empty( $settings['query_orderby'] ) ? sanitize_text_field( $settings['query_orderby'] ) : 'course_order';
 		$order          = ! empty( $settings['query_order'] ) ? sanitize_text_field( $settings['query_order'] ) : 'ASC';
 
@@ -1682,12 +1789,13 @@ class Course_Listing_Widget extends Widget_Base {
 
 		// Initial server-side query for instant render & SEO
 		$query_args = $this->get_query_args( $settings, 1 );
+		$posts_per_page = $query_args['posts_per_page'];
 		$courses_query = new \WP_Query( $query_args );
 
 		// Setup widget config payload
 		$config = [
 			'widgetId'        => $widget_id,
-			'postsPerPage'    => intval( $settings['posts_per_page'] ),
+			'postsPerPage'    => $posts_per_page,
 			'searchMethod'    => $settings['search_behavior'],
 			'debounceDelay'   => intval( $settings['search_debounce_delay'] ),
 			'minChars'        => intval( $settings['search_min_chars'] ),
@@ -1829,8 +1937,8 @@ class Course_Listing_Widget extends Widget_Base {
 
 			<!-- Skeleton Shimmer Placeholder (Hidden while content is active) -->
 			<div class="cl-loading-skeleton" style="display:none;" aria-hidden="true">
-				<div class="cl-courses-grid">
-					<?php for ( $i = 0; $i < max( 3, min( 6, intval( $settings['posts_per_page'] ) ) ); $i++ ) : ?>
+				<div class="cl-courses-grid cl-skeleton-grid">
+					<?php for ( $i = 0; $i < max( 3, min( 12, $posts_per_page ) ); $i++ ) : ?>
 						<div class="cl-skeleton-card">
 							<div class="cl-skeleton-thumb"></div>
 							<div class="cl-skeleton-body">
@@ -1845,7 +1953,7 @@ class Course_Listing_Widget extends Widget_Base {
 			</div>
 
 			<!-- Course Cards Grid -->
-			<div class="cl-courses-grid" id="cl-grid-<?php echo esc_attr( $widget_id ); ?>">
+			<div class="cl-courses-grid cl-main-grid" id="cl-grid-<?php echo esc_attr( $widget_id ); ?>">
 				<?php
 				if ( $courses_query->have_posts() ) {
 					while ( $courses_query->have_posts() ) {
