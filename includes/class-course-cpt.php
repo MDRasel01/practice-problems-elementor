@@ -79,12 +79,12 @@ class Course_CPT {
 			'show_in_admin_bar'     => true,
 			'show_in_nav_menus'     => true,
 			'can_export'            => true,
-			'has_archive'           => true,
+			'has_archive'           => 'courses',
 			'exclude_from_search'   => false,
 			'publicly_queryable'    => true,
 			'capability_type'       => 'post',
 			'show_in_rest'          => true,
-			'rewrite'               => [ 'slug' => 'courses', 'with_front' => false ],
+			'rewrite'               => [ 'slug' => 'course', 'with_front' => false ],
 		];
 
 		register_post_type( 'course', $args );
@@ -500,7 +500,7 @@ class Course_CPT {
 	 */
 	public function maybe_flush_rewrite_rules() {
 		$rules = get_option( 'rewrite_rules' );
-		if ( ! is_array( $rules ) || ! isset( $rules['courses/([^/]+)/?$'] ) ) {
+		if ( ! is_array( $rules ) || ! isset( $rules['course/([^/]+)/?$'] ) ) {
 			flush_rewrite_rules( false );
 		}
 	}
