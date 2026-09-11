@@ -94,7 +94,7 @@ class Course_Listing_Widget extends Widget_Base {
 		$this->start_controls_section(
 			'section_layout',
 			[
-				'label' => esc_html__( 'Grid Layout', 'practice-problems-el' ),
+				'label' => esc_html__( 'Grid Layout (Columns & Rows)', 'practice-problems-el' ),
 				'tab'   => Controls_Manager::TAB_CONTENT,
 			]
 		);
@@ -102,11 +102,12 @@ class Course_Listing_Widget extends Widget_Base {
 		$this->add_responsive_control(
 			'grid_columns',
 			[
-				'label'          => esc_html__( 'Columns', 'practice-problems-el' ),
+				'label'          => esc_html__( 'Columns per Row', 'practice-problems-el' ),
 				'type'           => Controls_Manager::SELECT,
 				'default'        => '3',
 				'tablet_default' => '2',
 				'mobile_default' => '1',
+				'render_type'    => 'template',
 				'options'        => [
 					'1' => esc_html__( '1 Column', 'practice-problems-el' ),
 					'2' => esc_html__( '2 Columns', 'practice-problems-el' ),
@@ -116,21 +117,7 @@ class Course_Listing_Widget extends Widget_Base {
 					'6' => esc_html__( '6 Columns', 'practice-problems-el' ),
 				],
 				'selectors'      => [
-					'{{WRAPPER}} .cl-courses-grid' => 'grid-template-columns: repeat({{VALUE}}, minmax(0, 1fr));',
-				],
-			]
-		);
-
-		$this->add_control(
-			'limit_by',
-			[
-				'label'       => esc_html__( 'Number of Courses By', 'practice-problems-el' ),
-				'type'        => Controls_Manager::SELECT,
-				'default'     => 'rows',
-				'render_type' => 'template',
-				'options'     => [
-					'rows'   => esc_html__( 'Columns × Rows', 'practice-problems-el' ),
-					'custom' => esc_html__( 'Custom Count', 'practice-problems-el' ),
+					'{{WRAPPER}} .cl-courses-grid' => '--cl-grid-columns: {{VALUE}}; grid-template-columns: repeat({{VALUE}}, minmax(0, 1fr));',
 				],
 			]
 		);
@@ -138,29 +125,40 @@ class Course_Listing_Widget extends Widget_Base {
 		$this->add_control(
 			'grid_rows',
 			[
-				'label'       => esc_html__( 'Rows', 'practice-problems-el' ),
+				'label'       => esc_html__( 'Number of Rows', 'practice-problems-el' ),
 				'type'        => Controls_Manager::NUMBER,
 				'default'     => 2,
 				'min'         => 1,
 				'max'         => 12,
 				'step'        => 1,
 				'render_type' => 'template',
-				'condition'   => [ 'limit_by' => 'rows' ],
-				'description' => esc_html__( 'Number of rows to show. (Total Courses = Columns × Rows)', 'practice-problems-el' ),
+				'description' => esc_html__( 'Total courses shown per page = Columns × Rows (e.g. 3 columns × 2 rows = 6 courses).', 'practice-problems-el' ),
+			]
+		);
+
+		$this->add_control(
+			'custom_posts_count',
+			[
+				'label'        => esc_html__( 'Custom Course Count Override', 'practice-problems-el' ),
+				'type'         => Controls_Manager::SWITCHER,
+				'default'      => '',
+				'return_value' => 'yes',
+				'render_type'  => 'template',
+				'description'  => esc_html__( 'Enable to override Columns × Rows and set an exact number of courses per page.', 'practice-problems-el' ),
 			]
 		);
 
 		$this->add_control(
 			'posts_per_page',
 			[
-				'label'       => esc_html__( 'Courses Per Page', 'practice-problems-el' ),
+				'label'       => esc_html__( 'Custom Courses Count', 'practice-problems-el' ),
 				'type'        => Controls_Manager::NUMBER,
 				'default'     => 6,
 				'min'         => 1,
 				'max'         => 60,
 				'step'        => 1,
 				'render_type' => 'template',
-				'condition'   => [ 'limit_by' => 'custom' ],
+				'condition'   => [ 'custom_posts_count' => 'yes' ],
 				'description' => esc_html__( 'Custom number of courses to display per page.', 'practice-problems-el' ),
 			]
 		);
@@ -176,7 +174,7 @@ class Course_Listing_Widget extends Widget_Base {
 				],
 				'default'    => [ 'unit' => 'px', 'size' => 24 ],
 				'selectors'  => [
-					'{{WRAPPER}} .cl-courses-grid' => 'column-gap: {{SIZE}}{{UNIT}};',
+					'{{WRAPPER}} .cl-courses-grid' => '--cl-col-gap: {{SIZE}}{{UNIT}}; column-gap: {{SIZE}}{{UNIT}};',
 				],
 			]
 		);
@@ -192,7 +190,7 @@ class Course_Listing_Widget extends Widget_Base {
 				],
 				'default'    => [ 'unit' => 'px', 'size' => 24 ],
 				'selectors'  => [
-					'{{WRAPPER}} .cl-courses-grid' => 'row-gap: {{SIZE}}{{UNIT}};',
+					'{{WRAPPER}} .cl-courses-grid' => '--cl-row-gap: {{SIZE}}{{UNIT}}; row-gap: {{SIZE}}{{UNIT}};',
 				],
 			]
 		);
@@ -1699,14 +1697,15 @@ class Course_Listing_Widget extends Widget_Base {
 	 * Build WP_Query args based on widget settings.
 	 */
 	public function get_query_args( $settings, $paged = 1, $search = '', $active_level = '' ) {
-		if ( isset( $settings['limit_by'] ) && 'custom' === $settings['limit_by'] ) {
-			$posts_per_page = ! empty( $settings['posts_per_page'] ) ? intval( $settings['posts_per_page'] ) : 6;
-		} elseif ( isset( $settings['limit_by'] ) && 'rows' === $settings['limit_by'] ) {
-			$cols = ! empty( $settings['grid_columns'] ) ? intval( $settings['grid_columns'] ) : 3;
-			$rows = ! empty( $settings['grid_rows'] ) ? intval( $settings['grid_rows'] ) : 2;
-			$posts_per_page = max( 1, $cols * $rows );
+		$cols = ! empty( $settings['grid_columns'] ) ? intval( $settings['grid_columns'] ) : 3;
+		$rows = ! empty( $settings['grid_rows'] ) ? intval( $settings['grid_rows'] ) : 2;
+
+		if ( ! empty( $settings['custom_posts_count'] ) && 'yes' === $settings['custom_posts_count'] ) {
+			$posts_per_page = ! empty( $settings['posts_per_page'] ) ? intval( $settings['posts_per_page'] ) : ( $cols * $rows );
+		} elseif ( isset( $settings['limit_by'] ) && 'custom' === $settings['limit_by'] ) {
+			$posts_per_page = ! empty( $settings['posts_per_page'] ) ? intval( $settings['posts_per_page'] ) : ( $cols * $rows );
 		} else {
-			$posts_per_page = ! empty( $settings['posts_per_page'] ) ? intval( $settings['posts_per_page'] ) : 6;
+			$posts_per_page = max( 1, $cols * $rows );
 		}
 		$orderby        = ! empty( $settings['query_orderby'] ) ? sanitize_text_field( $settings['query_orderby'] ) : 'course_order';
 		$order          = ! empty( $settings['query_order'] ) ? sanitize_text_field( $settings['query_order'] ) : 'ASC';
