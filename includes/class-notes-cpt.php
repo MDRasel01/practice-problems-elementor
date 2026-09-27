@@ -228,6 +228,7 @@ class Notes_CPT {
 		if ( is_singular( 'math_note' ) && in_the_loop() && is_main_query() ) {
 			// Enqueue CSS and JS assets
 			wp_enqueue_style( 'topic-notes-frontend' );
+			wp_enqueue_script( 'pp-mathjax' );
 			wp_enqueue_script( 'topic-notes-frontend' );
 
 			// Check if Topic_Notes_Widget class is available
@@ -257,6 +258,7 @@ class Notes_CPT {
 	public function enqueue_single_note_assets() {
 		if ( is_singular( 'math_note' ) && ! is_admin() ) {
 			wp_enqueue_style( 'topic-notes-frontend' );
+			wp_enqueue_script( 'pp-mathjax' );
 			wp_enqueue_script( 'topic-notes-frontend' );
 		}
 	}

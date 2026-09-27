@@ -2131,15 +2131,86 @@ class Topic_Notes_Widget extends Widget_Base {
 		$course_name  = ! empty( $courses ) ? $courses[0] : '';
 		$chapter_name = ! empty( $chapters ) ? $chapters[0] : '';
 
-		// Generate TOC items
+		// Normalize sections into chapters data
+		$is_chapter_format = false;
+		if ( ! empty( $sections ) && is_array( $sections ) ) {
+			if ( isset( $sections[0]['subsections'] ) || isset( $sections[0]['definition'] ) ) {
+				$is_chapter_format = true;
+			}
+		}
+
+		$chapters_data = [];
+		if ( $is_chapter_format ) {
+			$chapters_data = $sections;
+		} else {
+			// Migrate legacy flat array format
+			$single_ch = [
+				'id'             => 'ch_main',
+				'title'          => 'Overview',
+				'subsections'    => [],
+				'definition'     => [ 'enabled' => false, 'content' => '' ],
+				'formula'        => [ 'enabled' => false, 'formula' => '', 'explanation' => '' ],
+				'worked_example' => [ 'enabled' => false, 'problem' => '', 'solution' => '' ],
+				'legacy_items'   => [],
+			];
+
+			foreach ( $sections as $s_item ) {
+				$t = $s_item['type'] ?? 'overview';
+				if ( 'overview' === $t || 'custom' === $t ) {
+					$single_ch['subsections'][] = [
+						'id'      => 'sub_' . uniqid(),
+						'title'   => $s_item['title'] ?? 'Overview',
+						'content' => $s_item['content'] ?? '',
+					];
+				} elseif ( 'definition' === $t ) {
+					$single_ch['definition'] = [
+						'enabled' => true,
+						'content' => $s_item['content'] ?? '',
+					];
+				} elseif ( 'formula' === $t ) {
+					$single_ch['formula'] = [
+						'enabled'     => true,
+						'formula'     => $s_item['formula'] ?? '',
+						'explanation' => $s_item['explanation'] ?? '',
+					];
+				} elseif ( 'worked_example' === $t ) {
+					$single_ch['worked_example'] = [
+						'enabled'  => true,
+						'problem'  => $s_item['problem'] ?? '',
+						'solution' => $s_item['solution'] ?? '',
+					];
+				} else {
+					$single_ch['legacy_items'][] = $s_item;
+				}
+			}
+
+			if ( ! empty( $single_ch['subsections'] ) || ! empty( $single_ch['definition']['enabled'] ) || ! empty( $single_ch['legacy_items'] ) ) {
+				$chapters_data[] = $single_ch;
+			}
+		}
+
+		// Generate TOC items from Chapters & Sub Sections
 		$toc_items = [];
-		foreach ( $sections as $idx => $sec ) {
-			if ( ! isset( $sec['show_toc'] ) || 'yes' === $sec['show_toc'] ) {
-				$sec_id = 'tn-sec-' . sanitize_title( $sec['title'] ?? 'sec-' . $idx );
-				$toc_items[] = [
-					'id'    => $sec_id,
-					'title' => $sec['title'] ?? ucfirst( str_replace( '_', ' ', $sec['type'] ?? 'section' ) ),
-				];
+		foreach ( $chapters_data as $c_idx => $ch ) {
+			$ch_id    = 'tn-chapter-' . sanitize_title( $ch['title'] ?? 'chapter-' . $c_idx );
+			$ch_title = $ch['title'] ?? 'Overview';
+
+			$toc_items[] = [
+				'id'     => $ch_id,
+				'title'  => $ch_title,
+				'is_sub' => false,
+			];
+
+			if ( ! empty( $ch['subsections'] ) && is_array( $ch['subsections'] ) ) {
+				foreach ( $ch['subsections'] as $s_idx => $sub ) {
+					$sub_id    = 'tn-sub-' . sanitize_title( ( $sub['title'] ?? 'sub' ) . '-' . $c_idx . '-' . $s_idx );
+					$sub_title = $sub['title'] ?? 'Sub Section';
+					$toc_items[] = [
+						'id'     => $sub_id,
+						'title'  => $sub_title,
+						'is_sub' => true,
+					];
+				}
 			}
 		}
 
@@ -2188,8 +2259,10 @@ class Topic_Notes_Widget extends Widget_Base {
 							<h3 class="tn-toc-title"><?php echo esc_html( $s['toc_title'] ); ?></h3>
 							<ul class="tn-toc-list">
 								<?php foreach ( $toc_items as $item ) : ?>
-									<li class="tn-toc-item">
-										<a href="#<?php echo esc_attr( $item['id'] ); ?>" class="tn-toc-link"><?php echo esc_html( $item['title'] ); ?></a>
+									<li class="tn-toc-item <?php echo ! empty( $item['is_sub'] ) ? 'tn-toc-item-sub' : 'tn-toc-item-chapter'; ?>">
+										<a href="#<?php echo esc_attr( $item['id'] ); ?>" class="tn-toc-link">
+											<span class="pp-math-render"><?php echo esc_html( $item['title'] ); ?></span>
+										</a>
 									</li>
 								<?php endforeach; ?>
 							</ul>
@@ -2213,115 +2286,124 @@ class Topic_Notes_Widget extends Widget_Base {
 						<?php endif; ?>
 					</header>
 
-					<?php // SECTIONS ?>
+					<?php // CHAPTER BOXES & ACCORDIONS ?>
 					<div class="tn-sections-body">
-						<?php foreach ( $sections as $idx => $sec ) : 
-							$type   = $sec['type'] ?? 'overview';
-							$sec_id = 'tn-sec-' . sanitize_title( $sec['title'] ?? 'sec-' . $idx );
-							$sec_title = $sec['title'] ?? '';
+						<?php foreach ( $chapters_data as $c_idx => $ch ) : 
+							$ch_id    = 'tn-chapter-' . sanitize_title( $ch['title'] ?? 'chapter-' . $c_idx );
+							$ch_title = $ch['title'] ?? 'Overview';
+							$subsections = ( isset( $ch['subsections'] ) && is_array( $ch['subsections'] ) ) ? $ch['subsections'] : [];
 						?>
-							<section id="<?php echo esc_attr( $sec_id ); ?>" class="tn-section tn-section-<?php echo esc_attr( $type ); ?>">
-								<?php if ( ! empty( $sec_title ) && 'overview' !== $type ) : ?>
-									<h2 class="tn-section-heading"><?php echo esc_html( $sec_title ); ?></h2>
+							<section id="<?php echo esc_attr( $ch_id ); ?>" class="tn-chapter-box">
+								<!-- Chapter Header / Title -->
+								<div class="tn-chapter-box-header">
+									<h2 class="tn-chapter-title pp-math-render"><?php echo esc_html( $ch_title ); ?></h2>
+								</div>
+
+								<!-- Sub Sections (Accordions) -->
+								<?php if ( ! empty( $subsections ) ) : ?>
+									<div class="tn-subsections-accordions">
+										<?php foreach ( $subsections as $s_idx => $sub ) : 
+											$sub_id = 'tn-sub-' . sanitize_title( ( $sub['title'] ?? 'sub' ) . '-' . $c_idx . '-' . $s_idx );
+											$sub_title = $sub['title'] ?? 'Sub Section';
+										?>
+											<div id="<?php echo esc_attr( $sub_id ); ?>" class="tn-accordion-item" data-sub-id="<?php echo esc_attr( $sub['id'] ?? 'sub_' . $s_idx ); ?>">
+												<button class="tn-accordion-header" type="button" aria-expanded="false">
+													<span class="tn-accordion-title pp-math-render"><?php echo esc_html( $sub_title ); ?></span>
+													<span class="tn-accordion-icon" aria-hidden="true">+</span>
+												</button>
+												<div class="tn-accordion-body" style="display:none;">
+													<div class="tn-accordion-content pp-math-render">
+														<?php echo wp_kses_post( wpautop( $sub['content'] ?? '' ) ); ?>
+													</div>
+												</div>
+											</div>
+										<?php endforeach; ?>
+									</div>
 								<?php endif; ?>
 
-								<?php // 1. OVERVIEW / CUSTOM ?>
-								<?php if ( 'overview' === $type || 'custom' === $type ) : ?>
-									<div class="tn-section-body">
-										<?php echo wp_kses_post( $sec['content'] ?? '' ); ?>
-									</div>
-
-								<?php // 2. DEFINITION CARD ?>
-								<?php elseif ( 'definition' === $type ) : ?>
-									<div class="tn-definition-card" style="border-left-color: <?php echo esc_attr( $sec['accent_color'] ?? '#3b82f6' ); ?>;">
-										<?php if ( ! empty( $sec['label'] ) ) : ?>
-											<span class="tn-definition-label"><?php echo esc_html( $sec['label'] ); ?></span>
-										<?php endif; ?>
-										<div class="tn-definition-content">
-											<?php echo wp_kses_post( $sec['content'] ?? '' ); ?>
+								<!-- Optional: Definition Block -->
+								<?php if ( ! empty( $ch['definition']['enabled'] ) && ! empty( $ch['definition']['content'] ) ) : ?>
+									<div class="tn-definition-card">
+										<span class="tn-definition-label"><?php esc_html_e( 'Definition', 'practice-problems-el' ); ?></span>
+										<div class="tn-definition-content pp-math-render">
+											<?php echo wp_kses_post( wpautop( $ch['definition']['content'] ) ); ?>
 										</div>
 									</div>
+								<?php endif; ?>
 
-								<?php // 3. FORMULA CARD ?>
-								<?php elseif ( 'formula' === $type ) : ?>
+								<!-- Optional: Key Formula Block -->
+								<?php if ( ! empty( $ch['formula']['enabled'] ) && ! empty( $ch['formula']['formula'] ) ) : ?>
 									<div class="tn-formula-card">
-										<?php if ( ! empty( $sec['formula'] ) ) : ?>
-											<div class="tn-formula-display"><?php echo esc_html( $sec['formula'] ); ?></div>
-										<?php endif; ?>
-										<?php if ( ! empty( $sec['explanation'] ) ) : ?>
-											<p class="tn-formula-explanation"><?php echo wp_kses_post( $sec['explanation'] ); ?></p>
+										<div class="tn-formula-header">
+											<span class="tn-formula-badge"><?php esc_html_e( 'Key Formula', 'practice-problems-el' ); ?></span>
+										</div>
+										<div class="tn-formula-display pp-math-render">
+											$$<?php echo esc_html( trim( $ch['formula']['formula'], '$' ) ); ?>$$
+										</div>
+										<?php if ( ! empty( $ch['formula']['explanation'] ) ) : ?>
+											<p class="tn-formula-explanation pp-math-render"><?php echo wp_kses_post( $ch['formula']['explanation'] ); ?></p>
 										<?php endif; ?>
 									</div>
+								<?php endif; ?>
 
-								<?php // 4. WORKED EXAMPLE ?>
-								<?php elseif ( 'worked_example' === $type ) : 
-									$steps = [];
-									if ( ! empty( $sec['steps'] ) ) {
-										$raw_steps = preg_split( '/\r\n|\r|\n/', $sec['steps'] );
-										foreach ( $raw_steps as $rs ) {
-											if ( '' !== trim( $rs ) ) $steps[] = trim( $rs );
-										}
-									}
-								?>
+								<!-- Optional: Worked Example Block -->
+								<?php if ( ! empty( $ch['worked_example']['enabled'] ) && ( ! empty( $ch['worked_example']['problem'] ) || ! empty( $ch['worked_example']['solution'] ) ) ) : ?>
 									<div class="tn-example-card">
-										<?php if ( ! empty( $sec['problem'] ) ) : ?>
+										<div class="tn-example-header">
+											<span class="tn-example-badge"><?php esc_html_e( 'Worked Example', 'practice-problems-el' ); ?></span>
+										</div>
+										<?php if ( ! empty( $ch['worked_example']['problem'] ) ) : ?>
 											<div class="tn-example-problem">
-												<strong><?php echo esc_html( $sec['problem_label'] ?? 'Problem:' ); ?></strong>
-												<?php echo wp_kses_post( $sec['problem'] ); ?>
+												<strong><?php esc_html_e( 'Question:', 'practice-problems-el' ); ?></strong>
+												<div class="tn-example-problem-text pp-math-render">
+													<?php echo wp_kses_post( wpautop( $ch['worked_example']['problem'] ) ); ?>
+												</div>
 											</div>
 										<?php endif; ?>
-
-										<?php if ( ! empty( $steps ) ) : ?>
-											<div class="tn-example-steps">
-												<?php foreach ( $steps as $s_idx => $step_text ) : ?>
-													<div class="tn-step-row">
-														<span class="tn-step-badge"><?php echo esc_html( $s_idx + 1 ); ?></span>
-														<div class="tn-step-text"><?php echo wp_kses_post( $step_text ); ?></div>
-													</div>
-												<?php endforeach; ?>
-											</div>
-										<?php endif; ?>
-
-										<?php if ( ! empty( $sec['solution'] ) ) : ?>
+										<?php if ( ! empty( $ch['worked_example']['solution'] ) ) : ?>
 											<div class="tn-example-solution-box">
-												<span class="tn-example-solution-label"><?php echo esc_html( $sec['solution_label'] ?? 'Solution:' ); ?></span>
-												<span class="tn-example-solution-value"><?php echo wp_kses_post( $sec['solution'] ); ?></span>
+												<span class="tn-example-solution-label"><?php esc_html_e( 'Solution / Result:', 'practice-problems-el' ); ?></span>
+												<div class="tn-example-solution-value pp-math-render">
+													<?php echo wp_kses_post( wpautop( $ch['worked_example']['solution'] ) ); ?>
+												</div>
 											</div>
 										<?php endif; ?>
 									</div>
+								<?php endif; ?>
 
-								<?php // 5. COMMON MISTAKE ?>
-								<?php elseif ( 'common_mistake' === $type ) : 
-									$sev = $sec['severity'] ?? 'warning';
-								?>
-									<div class="tn-mistake-card <?php echo esc_attr( $sev ); ?>">
-										<svg class="tn-mistake-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-											<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-											<line x1="12" y1="9" x2="12" y2="13"/>
-											<line x1="12" y1="17" x2="12.01" y2="17"/>
-										</svg>
-										<div class="tn-mistake-body">
-											<?php if ( ! empty( $sec['mistake_title'] ) ) : ?>
-												<h4><?php echo esc_html( $sec['mistake_title'] ); ?></h4>
-											<?php endif; ?>
-											<p><?php echo wp_kses_post( $sec['description'] ?? '' ); ?></p>
-										</div>
-									</div>
-
-								<?php // 6. NEXT STEPS ?>
-								<?php elseif ( 'next_steps' === $type ) : ?>
-									<div class="tn-next-steps-card">
-										<div class="tn-next-steps-info">
-											<h3><?php echo esc_html( $sec['title'] ?? 'Next Steps' ); ?></h3>
-											<p><?php echo wp_kses_post( $sec['description'] ?? '' ); ?></p>
-										</div>
-										<?php if ( ! empty( $sec['button_text'] ) ) : ?>
-											<a href="<?php echo esc_url( $sec['button_link'] ?? '#' ); ?>" class="tn-btn-primary">
-												<span><?php echo esc_html( $sec['button_text'] ); ?></span>
-												<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-											</a>
+								<!-- Optional: Legacy items if converted from old format -->
+								<?php if ( ! empty( $ch['legacy_items'] ) ) : ?>
+									<?php foreach ( $ch['legacy_items'] as $l_item ) : 
+										$l_type = $l_item['type'] ?? '';
+									?>
+										<?php if ( 'common_mistake' === $l_type ) : ?>
+											<div class="tn-mistake-card <?php echo esc_attr( $l_item['severity'] ?? 'warning' ); ?>">
+												<svg class="tn-mistake-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+													<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+													<line x1="12" y1="9" x2="12" y2="13"/>
+													<line x1="12" y1="17" x2="12.01" y2="17"/>
+												</svg>
+												<div class="tn-mistake-body">
+													<?php if ( ! empty( $l_item['mistake_title'] ) ) : ?>
+														<h4><?php echo esc_html( $l_item['mistake_title'] ); ?></h4>
+													<?php endif; ?>
+													<p class="pp-math-render"><?php echo wp_kses_post( $l_item['description'] ?? '' ); ?></p>
+												</div>
+											</div>
+										<?php elseif ( 'next_steps' === $l_type ) : ?>
+											<div class="tn-next-steps-card">
+												<div class="tn-next-steps-info">
+													<h3><?php echo esc_html( $l_item['title'] ?? 'Next Steps' ); ?></h3>
+													<p><?php echo wp_kses_post( $l_item['description'] ?? '' ); ?></p>
+												</div>
+												<?php if ( ! empty( $l_item['button_text'] ) ) : ?>
+													<a href="<?php echo esc_url( $l_item['button_link'] ?? '#' ); ?>" class="tn-btn-primary">
+														<span><?php echo esc_html( $l_item['button_text'] ); ?></span>
+													</a>
+												<?php endif; ?>
+											</div>
 										<?php endif; ?>
-									</div>
+									<?php endforeach; ?>
 								<?php endif; ?>
 
 							</section>

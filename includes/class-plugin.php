@@ -174,7 +174,7 @@ final class Plugin {
 		wp_register_script(
 			'topic-notes-frontend',
 			PRACTICE_PROBLEMS_URL . 'assets/js/topic-notes-frontend.js',
-			[ 'elementor-frontend' ],
+			[ 'pp-mathjax' ],
 			PRACTICE_PROBLEMS_VERSION,
 			true
 		);

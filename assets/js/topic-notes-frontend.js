@@ -11,7 +11,7 @@
             this.container = container;
             this.progressBar = container.querySelector('.tn-progress-bar');
             this.tocLinks = Array.from(container.querySelectorAll('.tn-toc-link'));
-            this.sections = Array.from(container.querySelectorAll('.tn-section[id]'));
+            this.sections = Array.from(container.querySelectorAll('.tn-section[id], .tn-chapter-box[id], .tn-accordion-item[id]'));
 
             this.init();
         }
@@ -20,6 +20,22 @@
             this.initProgressBar();
             this.initTOCSpy();
             this.initSmoothScroll();
+            this.initAccordions();
+            this.initMathJax();
+        }
+
+        /**
+         * Initialize MathJax typesetting on load
+         */
+        initMathJax() {
+            if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+                const mathEls = Array.from(this.container.querySelectorAll('.pp-math-render'));
+                if (mathEls.length > 0) {
+                    window.MathJax.typesetPromise(mathEls).catch(function (err) {
+                        console.warn('[TopicNotes] MathJax typeset error:', err);
+                    });
+                }
+            }
         }
 
         /**
@@ -91,6 +107,13 @@
                         const target = this.container.querySelector(href);
                         if (target) {
                             e.preventDefault();
+
+                            // If target is an accordion item or inside one, ensure it is open
+                            const accordionItem = target.classList.contains('tn-accordion-item') ? target : target.closest('.tn-accordion-item');
+                            if (accordionItem && !accordionItem.classList.contains('is-open')) {
+                                this.openAccordion(accordionItem);
+                            }
+
                             const offset = 80; // Offset for navbar
                             const elementPosition = target.getBoundingClientRect().top;
                             const offsetPosition = elementPosition + window.pageYOffset - offset;
@@ -106,6 +129,58 @@
                     }
                 });
             });
+        }
+
+        /**
+         * Sub Section Accordions Handler
+         */
+        initAccordions() {
+            const accordionItems = this.container.querySelectorAll('.tn-accordion-item');
+            accordionItems.forEach(item => {
+                const header = item.querySelector('.tn-accordion-header');
+                if (!header) return;
+
+                header.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.toggleAccordion(item);
+                });
+            });
+        }
+
+        toggleAccordion(item) {
+            if (item.classList.contains('is-open')) {
+                this.closeAccordion(item);
+            } else {
+                this.openAccordion(item);
+            }
+        }
+
+        openAccordion(item) {
+            item.classList.add('is-open');
+            const header = item.querySelector('.tn-accordion-header');
+            const icon = item.querySelector('.tn-accordion-icon');
+            const body = item.querySelector('.tn-accordion-body');
+
+            if (header) header.setAttribute('aria-expanded', 'true');
+            if (icon) icon.innerHTML = '&minus;';
+            if (body) {
+                body.style.display = 'block';
+                // Trigger MathJax on opened content
+                if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+                    window.MathJax.typesetPromise([body]).catch(function () {});
+                }
+            }
+        }
+
+        closeAccordion(item) {
+            item.classList.remove('is-open');
+            const header = item.querySelector('.tn-accordion-header');
+            const icon = item.querySelector('.tn-accordion-icon');
+            const body = item.querySelector('.tn-accordion-body');
+
+            if (header) header.setAttribute('aria-expanded', 'false');
+            if (icon) icon.innerHTML = '&plus;';
+            if (body) body.style.display = 'none';
         }
     }
 

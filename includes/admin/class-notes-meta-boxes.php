@@ -35,6 +35,53 @@ class Notes_Meta_Boxes {
 		}
 
 		wp_enqueue_media();
+		wp_enqueue_script( 'jquery-ui-sortable' );
+
+		// Configure MathJax 3 for Admin Builder Live Preview
+		$mathjax_config = [
+			'tex' => [
+				'inlineMath'          => [ [ '$', '$' ], [ '\\(', '\\)' ] ],
+				'displayMath'         => [ [ '$$', '$$' ], [ '\\[', '\\]' ] ],
+				'processEscapes'      => true,
+				'processEnvironments' => true,
+			],
+			'options' => [
+				'skipHtmlTags' => [ 'script', 'noscript', 'style', 'textarea', 'pre', 'code' ],
+			],
+			'svg' => [
+				'fontCache' => 'global',
+			],
+		];
+
+		$config_script = 'window.MathJax = window.MathJax || ' . wp_json_encode( $mathjax_config ) . ';';
+		wp_register_script( 'pp-mathjax-config', '', [], PRACTICE_PROBLEMS_VERSION );
+		wp_enqueue_script( 'pp-mathjax-config' );
+		wp_add_inline_script( 'pp-mathjax-config', $config_script, 'before' );
+
+		wp_enqueue_script(
+			'pp-mathjax',
+			'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js',
+			[ 'pp-mathjax-config' ],
+			'3.2.2',
+			true
+		);
+
+		// Admin Note Section Builder CSS
+		wp_enqueue_style(
+			'mn-admin-builder',
+			PRACTICE_PROBLEMS_URL . 'assets/css/admin-notes-builder.css',
+			[],
+			PRACTICE_PROBLEMS_VERSION
+		);
+
+		// Admin Note Section Builder JS
+		wp_enqueue_script(
+			'mn-admin-builder',
+			PRACTICE_PROBLEMS_URL . 'assets/js/admin-notes-builder.js',
+			[ 'jquery', 'jquery-ui-sortable', 'pp-mathjax' ],
+			PRACTICE_PROBLEMS_VERSION,
+			true
+		);
 	}
 
 	/**
@@ -51,10 +98,10 @@ class Notes_Meta_Boxes {
 			'high'
 		);
 
-		// 2. Structured Section Builder
+		// 2. Structured Section Builder (Chapter / Sub Sections / Live LaTeX)
 		add_meta_box(
 			'mn_sections_builder',
-			esc_html__( 'Note Sections Builder (TOC & Content)', 'practice-problems-el' ),
+			esc_html__( 'Note Sections Builder (Overview / Chapters & Sub Sections)', 'practice-problems-el' ),
 			[ $this, 'render_sections_builder_meta_box' ],
 			'math_note',
 			'normal',
@@ -147,313 +194,20 @@ class Notes_Meta_Boxes {
 		wp_nonce_field( 'mn_save_sections_nonce', 'mn_sections_nonce' );
 
 		$raw_sections = get_post_meta( $post->ID, '_mn_sections', true );
-		$sections = is_array( $raw_sections ) ? $raw_sections : [];
-
-		// Default initial sections if empty
-		if ( empty( $sections ) ) {
-			$sections = [
-				[
-					'type'    => 'overview',
-					'title'   => 'Overview',
-					'show_toc'=> 'yes',
-					'content' => '',
-				],
-				[
-					'type'         => 'definition',
-					'title'        => 'Definition',
-					'label'        => 'Definition',
-					'accent_color' => '#3b82f6',
-					'show_toc'     => 'yes',
-					'content'      => '',
-				],
-				[
-					'type'         => 'formula',
-					'title'        => 'Key Formula',
-					'formula'      => '',
-					'formula_type' => 'latex',
-					'explanation'  => '',
-					'show_toc'     => 'yes',
-				],
-				[
-					'type'           => 'worked_example',
-					'title'          => 'Worked Example',
-					'problem_label'  => 'Problem',
-					'problem'        => '',
-					'steps'          => "1. Write the expression\n2. Factor numerator and cancel common terms\n3. Substitute limit value",
-					'solution_label' => 'Solution',
-					'solution'       => '',
-					'show_toc'       => 'yes',
-				],
-				[
-					'type'        => 'common_mistake',
-					'title'       => 'Common Mistake',
-					'mistake_title' => "Don't cancel before expanding",
-					'description' => 'You can only cancel factors that are multiplied across the entire numerator and denominator.',
-					'severity'    => 'warning',
-					'show_toc'    => 'yes',
-				],
-				[
-					'type'        => 'next_steps',
-					'title'       => 'Next Steps',
-					'description' => 'Work through practice problems to build speed and confidence with this concept.',
-					'button_text' => 'Go to practice problems',
-					'button_link' => '#',
-					'show_toc'    => 'yes',
-				],
-			];
-		}
+		$sections     = is_array( $raw_sections ) ? $raw_sections : [];
 		?>
-		<style>
-			.mn-sections-wrapper { margin-top: 10px; }
-			.mn-section-card {
-				background: #ffffff;
-				border: 1px solid #cbd5e1;
-				border-radius: 8px;
-				margin-bottom: 12px;
-				overflow: hidden;
-				box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-			}
-			.mn-section-header {
-				background: #f8fafc;
-				padding: 10px 16px;
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				border-bottom: 1px solid #e2e8f0;
-				cursor: pointer;
-				user-select: none;
-			}
-			.mn-section-header h4 { margin: 0; font-size: 14px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px; }
-			.mn-section-type-badge {
-				font-size: 11px;
-				padding: 2px 8px;
-				border-radius: 4px;
-				background: #e0e7ff;
-				color: #3730a3;
-				text-transform: uppercase;
-				font-weight: 700;
-			}
-			.mn-section-body { padding: 16px; display: block; }
-			.mn-field-group { margin-bottom: 14px; }
-			.mn-field-group label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 13px; }
-			.mn-field-group input[type="text"], .mn-field-group textarea, .mn-field-group select { width: 100%; }
-			.mn-btn-remove { color: #dc2626; background: none; border: none; cursor: pointer; font-size: 13px; }
-			.mn-btn-remove:hover { text-decoration: underline; }
-			.mn-add-section-bar { margin-top: 16px; padding: 16px; background: #f1f5f9; border-radius: 8px; display: flex; align-items: center; gap: 12px; }
-		</style>
-
-		<div class="mn-sections-wrapper" id="mn_sections_container">
-			<?php foreach ( $sections as $i => $sec ) : 
-				$type  = $sec['type'] ?? 'overview';
-				$title = $sec['title'] ?? ucfirst( str_replace( '_', ' ', $type ) );
-				$toc   = ( ! isset( $sec['show_toc'] ) || 'yes' === $sec['show_toc'] ) ? 'yes' : 'no';
-			?>
-				<div class="mn-section-card" data-index="<?php echo esc_attr( $i ); ?>">
-					<div class="mn-section-header">
-						<h4>
-							<span class="dashicons dashicons-menu"></span>
-							<span class="mn-sec-title-display"><?php echo esc_html( $title ); ?></span>
-							<span class="mn-section-type-badge"><?php echo esc_html( $type ); ?></span>
-						</h4>
-						<div style="display:flex;align-items:center;gap:12px;">
-							<label style="font-size:12px;cursor:pointer;">
-								<input type="checkbox" name="mn_sec[<?php echo esc_attr( $i ); ?>][show_toc]" value="yes" <?php checked( $toc, 'yes' ); ?>>
-								<?php esc_html_e( 'Show in TOC', 'practice-problems-el' ); ?>
-							</label>
-							<button type="button" class="mn-btn-remove">&times; <?php esc_html_e( 'Remove', 'practice-problems-el' ); ?></button>
-						</div>
-					</div>
-
-					<div class="mn-section-body">
-						<input type="hidden" name="mn_sec[<?php echo esc_attr( $i ); ?>][type]" value="<?php echo esc_attr( $type ); ?>">
-
-						<div class="mn-field-group">
-							<label><?php esc_html_e( 'Section Title (Heading)', 'practice-problems-el' ); ?></label>
-							<input type="text" class="mn-sec-title-input" name="mn_sec[<?php echo esc_attr( $i ); ?>][title]" value="<?php echo esc_attr( $title ); ?>">
-						</div>
-
-						<?php if ( 'overview' === $type || 'custom' === $type ) : ?>
-							<div class="mn-field-group">
-								<label><?php esc_html_e( 'Content', 'practice-problems-el' ); ?></label>
-								<textarea name="mn_sec[<?php echo esc_attr( $i ); ?>][content]" rows="5"><?php echo esc_textarea( $sec['content'] ?? '' ); ?></textarea>
-							</div>
-
-						<?php elseif ( 'definition' === $type ) : ?>
-							<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" class="mn-field-group">
-								<div>
-									<label><?php esc_html_e( 'Badge Label', 'practice-problems-el' ); ?></label>
-									<input type="text" name="mn_sec[<?php echo esc_attr( $i ); ?>][label]" value="<?php echo esc_attr( $sec['label'] ?? 'Definition' ); ?>">
-								</div>
-								<div>
-									<label><?php esc_html_e( 'Accent Border Color', 'practice-problems-el' ); ?></label>
-									<input type="text" name="mn_sec[<?php echo esc_attr( $i ); ?>][accent_color]" value="<?php echo esc_attr( $sec['accent_color'] ?? '#3b82f6' ); ?>">
-								</div>
-							</div>
-							<div class="mn-field-group">
-								<label><?php esc_html_e( 'Definition Text', 'practice-problems-el' ); ?></label>
-								<textarea name="mn_sec[<?php echo esc_attr( $i ); ?>][content]" rows="4"><?php echo esc_textarea( $sec['content'] ?? '' ); ?></textarea>
-							</div>
-
-						<?php elseif ( 'formula' === $type ) : ?>
-							<div class="mn-field-group">
-								<label><?php esc_html_e( 'Formula Content (LaTeX, Math, or Plain Text)', 'practice-problems-el' ); ?></label>
-								<input type="text" name="mn_sec[<?php echo esc_attr( $i ); ?>][formula]" value="<?php echo esc_attr( $sec['formula'] ?? '' ); ?>" placeholder="e.g. f'(x) = lim h->0 [f(x+h) - f(x)] / h">
-							</div>
-							<div class="mn-field-group">
-								<label><?php esc_html_e( 'Formula Explanation / Description', 'practice-problems-el' ); ?></label>
-								<textarea name="mn_sec[<?php echo esc_attr( $i ); ?>][explanation]" rows="3"><?php echo esc_textarea( $sec['explanation'] ?? '' ); ?></textarea>
-							</div>
-
-						<?php elseif ( 'worked_example' === $type ) : ?>
-							<div class="mn-field-group">
-								<label><?php esc_html_e( 'Problem Statement / Question', 'practice-problems-el' ); ?></label>
-								<textarea name="mn_sec[<?php echo esc_attr( $i ); ?>][problem]" rows="3"><?php echo esc_textarea( $sec['problem'] ?? '' ); ?></textarea>
-							</div>
-							<div class="mn-field-group">
-								<label><?php esc_html_e( 'Solution Steps (One step per line)', 'practice-problems-el' ); ?></label>
-								<textarea name="mn_sec[<?php echo esc_attr( $i ); ?>][steps]" rows="5" placeholder="Step 1: ...&#10;Step 2: ..."><?php echo esc_textarea( $sec['steps'] ?? '' ); ?></textarea>
-							</div>
-							<div style="display:grid;grid-template-columns:120px 1fr;gap:12px;" class="mn-field-group">
-								<div>
-									<label><?php esc_html_e( 'Solution Label', 'practice-problems-el' ); ?></label>
-									<input type="text" name="mn_sec[<?php echo esc_attr( $i ); ?>][solution_label]" value="<?php echo esc_attr( $sec['solution_label'] ?? 'Solution' ); ?>">
-								</div>
-								<div>
-									<label><?php esc_html_e( 'Final Solution / Answer', 'practice-problems-el' ); ?></label>
-									<input type="text" name="mn_sec[<?php echo esc_attr( $i ); ?>][solution]" value="<?php echo esc_attr( $sec['solution'] ?? '' ); ?>">
-								</div>
-							</div>
-
-						<?php elseif ( 'common_mistake' === $type ) : ?>
-							<div style="display:grid;grid-template-columns:1fr 140px;gap:12px;" class="mn-field-group">
-								<div>
-									<label><?php esc_html_e( 'Mistake Heading / Rule', 'practice-problems-el' ); ?></label>
-									<input type="text" name="mn_sec[<?php echo esc_attr( $i ); ?>][mistake_title]" value="<?php echo esc_attr( $sec['mistake_title'] ?? '' ); ?>" placeholder="e.g. Don't cancel before expanding">
-								</div>
-								<div>
-									<label><?php esc_html_e( 'Severity', 'practice-problems-el' ); ?></label>
-									<select name="mn_sec[<?php echo esc_attr( $i ); ?>][severity]">
-										<option value="warning" <?php selected( $sec['severity'] ?? 'warning', 'warning' ); ?>><?php esc_html_e( 'Warning', 'practice-problems-el' ); ?></option>
-										<option value="critical" <?php selected( $sec['severity'] ?? '', 'critical' ); ?>><?php esc_html_e( 'Critical', 'practice-problems-el' ); ?></option>
-										<option value="info" <?php selected( $sec['severity'] ?? '', 'info' ); ?>><?php esc_html_e( 'Info / Tip', 'practice-problems-el' ); ?></option>
-									</select>
-								</div>
-							</div>
-							<div class="mn-field-group">
-								<label><?php esc_html_e( 'Explanation / Advice', 'practice-problems-el' ); ?></label>
-								<textarea name="mn_sec[<?php echo esc_attr( $i ); ?>][description]" rows="3"><?php echo esc_textarea( $sec['description'] ?? '' ); ?></textarea>
-							</div>
-
-						<?php elseif ( 'next_steps' === $type ) : ?>
-							<div class="mn-field-group">
-								<label><?php esc_html_e( 'Description / Next Recommended Action', 'practice-problems-el' ); ?></label>
-								<textarea name="mn_sec[<?php echo esc_attr( $i ); ?>][description]" rows="2"><?php echo esc_textarea( $sec['description'] ?? '' ); ?></textarea>
-							</div>
-							<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" class="mn-field-group">
-								<div>
-									<label><?php esc_html_e( 'Button Text', 'practice-problems-el' ); ?></label>
-									<input type="text" name="mn_sec[<?php echo esc_attr( $i ); ?>][button_text]" value="<?php echo esc_attr( $sec['button_text'] ?? 'Go to practice problems' ); ?>">
-								</div>
-								<div>
-									<label><?php esc_html_e( 'Button URL / Target', 'practice-problems-el' ); ?></label>
-									<input type="text" name="mn_sec[<?php echo esc_attr( $i ); ?>][button_link]" value="<?php echo esc_attr( $sec['button_link'] ?? '#' ); ?>">
-								</div>
-							</div>
-						<?php endif; ?>
-
-					</div>
-				</div>
-			<?php endforeach; ?>
-		</div>
-
-		<div class="mn-add-section-bar">
-			<strong><?php esc_html_e( 'Add New Section:', 'practice-problems-el' ); ?></strong>
-			<select id="mn_new_section_type">
-				<option value="overview"><?php esc_html_e( 'Overview', 'practice-problems-el' ); ?></option>
-				<option value="definition"><?php esc_html_e( 'Definition', 'practice-problems-el' ); ?></option>
-				<option value="formula"><?php esc_html_e( 'Key Formula', 'practice-problems-el' ); ?></option>
-				<option value="worked_example"><?php esc_html_e( 'Worked Example', 'practice-problems-el' ); ?></option>
-				<option value="common_mistake"><?php esc_html_e( 'Common Mistake', 'practice-problems-el' ); ?></option>
-				<option value="next_steps"><?php esc_html_e( 'Next Steps', 'practice-problems-el' ); ?></option>
-				<option value="custom"><?php esc_html_e( 'Custom Content', 'practice-problems-el' ); ?></option>
-			</select>
-			<button type="button" class="button button-primary" id="mn_add_section_btn">+ <?php esc_html_e( 'Add Section', 'practice-problems-el' ); ?></button>
-		</div>
-
 		<script>
-		jQuery(document).ready(function($){
-			// Live title update in header
-			$(document).on('input', '.mn-sec-title-input', function(){
-				$(this).closest('.mn-section-card').find('.mn-sec-title-display').text($(this).val());
-			});
-
-			// Remove section
-			$(document).on('click', '.mn-btn-remove', function(e){
-				e.preventDefault();
-				if(confirm('<?php echo esc_js( __( 'Remove this section?', 'practice-problems-el' ) ); ?>')){
-					$(this).closest('.mn-section-card').slideUp(200, function(){ $(this).remove(); });
-				}
-			});
-
-			// Add Section
-			$('#mn_add_section_btn').on('click', function(e){
-				e.preventDefault();
-				var type = $('#mn_new_section_type').val();
-				var index = $('.mn-section-card').length + Date.now();
-				var typeLabel = $('#mn_new_section_type option:selected').text();
-
-				var html = '<div class="mn-section-card" data-index="' + index + '">' +
-					'<div class="mn-section-header">' +
-						'<h4><span class="dashicons dashicons-menu"></span> <span class="mn-sec-title-display">' + typeLabel + '</span> <span class="mn-section-type-badge">' + type + '</span></h4>' +
-						'<div style="display:flex;align-items:center;gap:12px;">' +
-							'<label style="font-size:12px;cursor:pointer;"><input type="checkbox" name="mn_sec[' + index + '][show_toc]" value="yes" checked> <?php echo esc_js( __( 'Show in TOC', 'practice-problems-el' ) ); ?></label>' +
-							'<button type="button" class="mn-btn-remove">&times; <?php echo esc_js( __( 'Remove', 'practice-problems-el' ) ); ?></button>' +
-						'</div>' +
-					'</div>' +
-					'<div class="mn-section-body">' +
-						'<input type="hidden" name="mn_sec[' + index + '][type]" value="' + type + '">' +
-						'<div class="mn-field-group">' +
-							'<label><?php echo esc_js( __( 'Section Title', 'practice-problems-el' ) ); ?></label>' +
-							'<input type="text" class="mn-sec-title-input" name="mn_sec[' + index + '][title]" value="' + typeLabel + '">' +
-						'</div>';
-
-				if(type === 'overview' || type === 'custom'){
-					html += '<div class="mn-field-group"><label><?php echo esc_js( __( 'Content', 'practice-problems-el' ) ); ?></label><textarea name="mn_sec[' + index + '][content]" rows="5"></textarea></div>';
-				} else if(type === 'definition'){
-					html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" class="mn-field-group">' +
-						'<div><label><?php echo esc_js( __( 'Badge Label', 'practice-problems-el' ) ); ?></label><input type="text" name="mn_sec[' + index + '][label]" value="Definition"></div>' +
-						'<div><label><?php echo esc_js( __( 'Accent Border Color', 'practice-problems-el' ) ); ?></label><input type="text" name="mn_sec[' + index + '][accent_color]" value="#3b82f6"></div>' +
-					'</div>' +
-					'<div class="mn-field-group"><label><?php echo esc_js( __( 'Definition Text', 'practice-problems-el' ) ); ?></label><textarea name="mn_sec[' + index + '][content]" rows="4"></textarea></div>';
-				} else if(type === 'formula'){
-					html += '<div class="mn-field-group"><label><?php echo esc_js( __( 'Formula (LaTeX or text)', 'practice-problems-el' ) ); ?></label><input type="text" name="mn_sec[' + index + '][formula]"></div>' +
-					'<div class="mn-field-group"><label><?php echo esc_js( __( 'Explanation', 'practice-problems-el' ) ); ?></label><textarea name="mn_sec[' + index + '][explanation]" rows="3"></textarea></div>';
-				} else if(type === 'worked_example'){
-					html += '<div class="mn-field-group"><label><?php echo esc_js( __( 'Problem Statement', 'practice-problems-el' ) ); ?></label><textarea name="mn_sec[' + index + '][problem]" rows="3"></textarea></div>' +
-					'<div class="mn-field-group"><label><?php echo esc_js( __( 'Solution Steps (one per line)', 'practice-problems-el' ) ); ?></label><textarea name="mn_sec[' + index + '][steps]" rows="5"></textarea></div>' +
-					'<div style="display:grid;grid-template-columns:120px 1fr;gap:12px;" class="mn-field-group">' +
-						'<div><label><?php echo esc_js( __( 'Solution Label', 'practice-problems-el' ) ); ?></label><input type="text" name="mn_sec[' + index + '][solution_label]" value="Solution"></div>' +
-						'<div><label><?php echo esc_js( __( 'Final Answer', 'practice-problems-el' ) ); ?></label><input type="text" name="mn_sec[' + index + '][solution]"></div>' +
-					'</div>';
-				} else if(type === 'common_mistake'){
-					html += '<div style="display:grid;grid-template-columns:1fr 140px;gap:12px;" class="mn-field-group">' +
-						'<div><label><?php echo esc_js( __( 'Mistake Heading', 'practice-problems-el' ) ); ?></label><input type="text" name="mn_sec[' + index + '][mistake_title]"></div>' +
-						'<div><label><?php echo esc_js( __( 'Severity', 'practice-problems-el' ) ); ?></label><select name="mn_sec[' + index + '][severity]"><option value="warning">Warning</option><option value="critical">Critical</option><option value="info">Info / Tip</option></select></div>' +
-					'</div>' +
-					'<div class="mn-field-group"><label><?php echo esc_js( __( 'Explanation', 'practice-problems-el' ) ); ?></label><textarea name="mn_sec[' + index + '][description]" rows="3"></textarea></div>';
-				} else if(type === 'next_steps'){
-					html += '<div class="mn-field-group"><label><?php echo esc_js( __( 'Description', 'practice-problems-el' ) ); ?></label><textarea name="mn_sec[' + index + '][description]" rows="2"></textarea></div>' +
-					'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" class="mn-field-group">' +
-						'<div><label><?php echo esc_js( __( 'Button Text', 'practice-problems-el' ) ); ?></label><input type="text" name="mn_sec[' + index + '][button_text]" value="Go to practice problems"></div>' +
-						'<div><label><?php echo esc_js( __( 'Button Link', 'practice-problems-el' ) ); ?></label><input type="text" name="mn_sec[' + index + '][button_link]" value="#"></div>' +
-					'</div>';
-				}
-
-				html += '</div></div>';
-				$('#mn_sections_container').append(html);
-			});
-		});
+			window.mnInitialSectionsData = <?php echo wp_json_encode( $sections ); ?>;
 		</script>
+
+		<div id="mn_builder_root">
+			<div style="padding: 24px; text-align: center; color: #64748b;">
+				<span class="spinner is-active" style="float:none;margin-right:8px;"></span>
+				<?php esc_html_e( 'Loading Note Section Builder...', 'practice-problems-el' ); ?>
+			</div>
+		</div>
+
+		<textarea style="display:none;" id="mn_sections_data" name="_mn_sections_data"><?php echo esc_textarea( wp_json_encode( $sections ) ); ?></textarea>
 		<?php
 	}
 
@@ -493,7 +247,58 @@ class Notes_Meta_Boxes {
 
 		// Save Sections
 		if ( isset( $_POST['mn_sections_nonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['mn_sections_nonce'] ) ), 'mn_save_sections_nonce' ) ) {
-			if ( isset( $_POST['mn_sec'] ) && is_array( $_POST['mn_sec'] ) ) {
+			if ( isset( $_POST['_mn_sections_data'] ) ) {
+				$raw_json = wp_unslash( $_POST['_mn_sections_data'] );
+				$decoded  = json_decode( $raw_json, true );
+
+				if ( is_array( $decoded ) ) {
+					$clean_chapters = [];
+
+					foreach ( $decoded as $ch ) {
+						if ( ! is_array( $ch ) ) {
+							continue;
+						}
+
+						$clean_ch = [
+							'id'             => sanitize_key( $ch['id'] ?? 'ch_' . uniqid() ),
+							'title'          => sanitize_text_field( $ch['title'] ?? 'Overview' ),
+							'subsections'    => [],
+							'definition'     => [
+								'enabled' => ! empty( $ch['definition']['enabled'] ),
+								'content' => isset( $ch['definition']['content'] ) ? wp_kses_post( $ch['definition']['content'] ) : '',
+							],
+							'formula'        => [
+								'enabled'     => ! empty( $ch['formula']['enabled'] ),
+								'formula'     => isset( $ch['formula']['formula'] ) ? sanitize_text_field( $ch['formula']['formula'] ) : '',
+								'explanation' => isset( $ch['formula']['explanation'] ) ? wp_kses_post( $ch['formula']['explanation'] ) : '',
+							],
+							'worked_example' => [
+								'enabled'  => ! empty( $ch['worked_example']['enabled'] ),
+								'problem'  => isset( $ch['worked_example']['problem'] ) ? wp_kses_post( $ch['worked_example']['problem'] ) : '',
+								'solution' => isset( $ch['worked_example']['solution'] ) ? wp_kses_post( $ch['worked_example']['solution'] ) : '',
+							],
+						];
+
+						if ( isset( $ch['subsections'] ) && is_array( $ch['subsections'] ) ) {
+							foreach ( $ch['subsections'] as $sub ) {
+								if ( ! is_array( $sub ) ) {
+									continue;
+								}
+								$clean_ch['subsections'][] = [
+									'id'      => sanitize_key( $sub['id'] ?? 'sub_' . uniqid() ),
+									'title'   => sanitize_text_field( $sub['title'] ?? 'Sub Section' ),
+									'content' => isset( $sub['content'] ) ? wp_kses_post( $sub['content'] ) : '',
+								];
+							}
+						}
+
+						$clean_chapters[] = $clean_ch;
+					}
+
+					update_post_meta( $post_id, '_mn_sections', $clean_chapters );
+				}
+			} elseif ( isset( $_POST['mn_sec'] ) && is_array( $_POST['mn_sec'] ) ) {
+				// Legacy flat array fallback
 				$clean_sections = [];
 				foreach ( $_POST['mn_sec'] as $sec_data ) {
 					$clean = [
