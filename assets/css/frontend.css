@@ -1,0 +1,654 @@
+/**
+ * Practice Problems for Elementor - Frontend Scoped Stylesheet
+ * All selectors are scoped under .pp-widget-container to eliminate CSS leakage.
+ */
+
+/* 1. CONTAINER & BASE RESET */
+.pp-widget-container {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.5;
+}
+
+.pp-widget-container *,
+.pp-widget-container *::before,
+.pp-widget-container *::after {
+    box-sizing: border-box;
+}
+
+/* 2. HERO / HEADER */
+.pp-hero-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #ffffff;
+    border-radius: 16px;
+    padding: 36px 32px;
+    margin-bottom: 28px;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.pp-hero-eyebrow {
+    display: inline-block;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.12);
+    padding: 4px 12px;
+    border-radius: 9999px;
+    margin-bottom: 12px;
+}
+
+.pp-hero-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin: 0 0 12px 0;
+    color: #f8fafc;
+}
+
+.pp-hero-desc {
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    color: #94a3b8;
+    margin: 0;
+    max-width: 680px;
+}
+
+.pp-hero-cta-wrapper {
+    margin-top: 20px;
+}
+
+.pp-hero-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    background-color: #38bdf8;
+    color: #0f172a;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.pp-hero-cta-btn:hover {
+    background-color: #7dd3fc;
+    transform: translateY(-1px);
+    color: #0f172a;
+}
+
+/* 3. FILTER TOOLBAR */
+.pp-filters-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.pp-filters-bar.layout-column {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.pp-filters-bar.layout-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.pp-filter-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pp-filter-group label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #64748b;
+    white-space: nowrap;
+}
+
+/* Select Control */
+.pp-select-control {
+    padding: 8px 32px 8px 14px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1e293b;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pp-select-control:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Pills Group */
+.pp-pills-group {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.pp-pill-btn {
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    line-height: 1.3;
+}
+
+.pp-pill-btn:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.pp-pill-btn.active {
+    background: #0f172a;
+    border-color: #0f172a;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15);
+}
+
+/* Search Input */
+.pp-filter-search {
+    flex-grow: 1;
+    min-width: 180px;
+}
+
+.pp-search-input {
+    width: 100%;
+    padding: 8px 14px;
+    font-size: 0.875rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #1e293b;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pp-search-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Filter Actions (Reset & Expand) */
+.pp-filter-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.pp-action-btn {
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pp-action-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+/* Counter Bar */
+.pp-counter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px 14px 4px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+/* 4. PROBLEM CARDS & LIST */
+.pp-problems-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.pp-problem-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.pp-problem-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+    border-color: #cbd5e1;
+}
+
+/* Card Header & Badges */
+.pp-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.pp-card-meta-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pp-badge-id {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 0.875rem;
+    font-weight: 700;
+    border: 1px solid #e2e8f0;
+}
+
+.pp-badge-topic {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+}
+
+/* Difficulty Badges */
+.pp-badge-difficulty {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid transparent;
+}
+
+.pp-badge-difficulty.easy {
+    background: #ecfdf5;
+    color: #059669;
+    border-color: #a7f3d0;
+}
+
+.pp-badge-difficulty.medium {
+    background: #fffbeb;
+    color: #d97706;
+    border-color: #fde68a;
+}
+
+.pp-badge-difficulty.hard {
+    background: #fef2f2;
+    color: #dc2626;
+    border-color: #fecaca;
+}
+
+/* Problem Statement */
+.pp-statement-content {
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    color: #1e293b;
+    margin-bottom: 18px;
+    background: #f8fafc;
+    padding: 16px 18px;
+    border-radius: 10px;
+    border: 1px solid #f1f5f9;
+    word-break: break-word;
+}
+
+.pp-problem-title {
+    font-size: 1.1875rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+    line-height: 1.45;
+    font-family: inherit;
+}
+
+.pp-statement-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* 5. SOLUTION ACCORDION */
+.pp-solution-wrapper {
+    margin-top: 14px;
+}
+
+.pp-solution-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #1e293b;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pp-solution-toggle-btn:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+}
+
+.pp-toggle-icon {
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pp-solution-toggle-btn.expanded .pp-toggle-icon {
+    transform: rotate(180deg);
+}
+
+.pp-solution-content {
+    margin-top: 16px;
+    padding: 20px 22px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #3b82f6;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.pp-solution-title {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #334155;
+    margin: 0 0 14px 0;
+}
+
+.pp-steps-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pp-step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: #334155;
+}
+
+.pp-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    border-radius: 9999px;
+    background: #e2e8f0;
+    color: #1e293b;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 1px;
+    flex-shrink: 0;
+}
+
+.pp-step-body {
+    flex-grow: 1;
+}
+
+.pp-solution-html-body {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: #334155;
+    margin-bottom: 12px;
+}
+
+.pp-solution-html-body ol,
+.pp-solution-html-body ul {
+    padding-left: 24px;
+    margin: 12px 0;
+}
+
+.pp-solution-html-body li {
+    margin-bottom: 8px;
+}
+
+.pp-solution-html-body h3,
+.pp-solution-html-body h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 10px 0 8px 0;
+    color: #1e293b;
+}
+
+/* Answer Box */
+.pp-answer-box {
+    margin-top: 14px;
+    padding: 12px 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9375rem;
+    color: #0f172a;
+}
+
+.pp-answer-label {
+    color: #2563eb;
+    font-weight: 700;
+}
+
+.pp-answer-val {
+    font-weight: 600;
+}
+
+/* 6. PAGINATION */
+.pp-pagination-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+}
+
+.pp-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.pp-page-btn:not([disabled]):hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+.pp-page-btn.active {
+    background: #0f172a;
+    border-color: #0f172a;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15);
+}
+
+.pp-page-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.pp-page-ellipsis {
+    padding: 0 4px;
+    color: #94a3b8;
+    font-weight: 700;
+    user-select: none;
+}
+
+/* 7. EMPTY STATE */
+.pp-empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 14px;
+    margin: 20px 0;
+}
+
+.pp-empty-icon {
+    color: #94a3b8;
+    margin-bottom: 12px;
+}
+
+.pp-empty-state h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 8px 0;
+}
+
+.pp-empty-state p {
+    font-size: 0.9375rem;
+    color: #64748b;
+    max-width: 420px;
+    margin: 0 auto 18px auto;
+}
+
+.pp-empty-reset-btn {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+    padding: 8px 20px;
+}
+
+/* 8. RESPONSIVE BREAKPOINTS */
+@media (max-width: 767px) {
+    .pp-hero-card {
+        padding: 24px 20px;
+    }
+    .pp-hero-title {
+        font-size: 1.625rem;
+    }
+    .pp-filters-bar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16px;
+    }
+    .pp-filter-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .pp-select-control {
+        width: 100%;
+    }
+    .pp-filter-actions {
+        margin-left: 0;
+        justify-content: space-between;
+        width: 100%;
+    }
+    .pp-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .pp-page-btn {
+        min-width: 36px;
+        height: 36px;
+        padding: 0 10px;
+        font-size: 0.8125rem;
+    }
+}
+
+/* 9. MATHEMATICAL NOTATION & MATHJAX SUPPORT */
+.pp-math-render {
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+}
+
+.pp-math-render mjx-container[jax="SVG"] {
+    margin: 4px 0 !important;
+    outline: none;
+    vertical-align: middle;
+}
+
+.pp-math-render mjx-container[jax="SVG"][display="true"] {
+    display: block !important;
+    text-align: center;
+    margin: 12px 0 !important;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.pp-step-body mjx-container[jax="SVG"][display="true"] {
+    margin: 8px 0 !important;
+}
+
+.pp-answer-val mjx-container[jax="SVG"] {
+    vertical-align: middle;
+    display: inline-block !important;
+}

@@ -51,9 +51,14 @@ final class Plugin {
 		add_action( 'elementor/widgets/register', [ $this, 'register_widgets' ] );
 		add_action( 'elementor/frontend/after_register_styles', [ $this, 'register_styles' ] );
 		add_action( 'elementor/frontend/after_register_scripts', [ $this, 'register_scripts' ] );
+		add_action( 'elementor/editor/after_enqueue_scripts', [ $this, 'register_scripts' ] );
+		add_action( 'elementor/preview/enqueue_scripts', [ $this, 'register_scripts' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'register_styles' ] );
 		add_action( 'wp_enqueue_scripts', [ $this, 'register_scripts' ] );
 		add_action( 'init', [ $this, 'ensure_elementor_cpt_support' ], 20 );
+
+		// Cross-plugin MathJax compatibility filter
+		add_filter( 'lcs_mathjax_config', [ $this, 'filter_lcs_mathjax_config' ] );
 
 		// AJAX Handler for CPT query.
 		add_action( 'wp_ajax_pp_query_problems', [ $this, 'ajax_query_problems' ] );
@@ -126,10 +131,42 @@ final class Plugin {
 	 * Register frontend scripts.
 	 */
 	public function register_scripts() {
+		// Configure MathJax for frontend & Elementor
+		$mathjax_config = [
+			'tex' => [
+				'inlineMath'          => [ [ '$', '$' ], [ '\\(', '\\)' ] ],
+				'displayMath'         => [ [ '$$', '$$' ], [ '\\[', '\\]' ] ],
+				'packages'            => [ 'base', 'ams', 'noundefined', 'autoload', 'physics', 'cancel', 'color', 'mathtools' ],
+				'processEscapes'      => true,
+				'processEnvironments' => true,
+			],
+			'options' => [
+				'processHtmlClass' => 'pp-math-render|pp-widget-container|pp-problem-card|pp-statement-content|pp-step-body|pp-answer-val|lcs-equation|lcs-math-content',
+				'ignoreHtmlClass'  => 'tex2jax_ignore',
+			],
+			'svg' => [
+				'fontCache' => 'global',
+			],
+		];
+
+		$config_script = 'window.MathJax = window.MathJax || ' . wp_json_encode( $mathjax_config ) . ';';
+		wp_register_script( 'pp-mathjax-config', '', [], PRACTICE_PROBLEMS_VERSION );
+		wp_enqueue_script( 'pp-mathjax-config' );
+		wp_add_inline_script( 'pp-mathjax-config', $config_script, 'before' );
+
+		wp_register_script(
+			'pp-mathjax',
+			'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js',
+			[ 'pp-mathjax-config' ],
+			'3.2.2',
+			true
+		);
+		wp_enqueue_script( 'pp-mathjax' );
+
 		wp_register_script(
 			'practice-problems-frontend',
 			PRACTICE_PROBLEMS_URL . 'assets/js/frontend.js',
-			[ 'elementor-frontend' ],
+			[ 'elementor-frontend', 'pp-mathjax' ],
 			PRACTICE_PROBLEMS_VERSION,
 			true
 		);
@@ -167,6 +204,19 @@ final class Plugin {
 				'nonce'   => wp_create_nonce( 'course_listing_nonce' ),
 			]
 		);
+	}
+
+	/**
+	 * Cross-plugin compatibility: ensure MathJax also processes practice-problems elements.
+	 *
+	 * @param array $config MathJax config.
+	 * @return array
+	 */
+	public function filter_lcs_mathjax_config( $config ) {
+		if ( isset( $config['options']['processHtmlClass'] ) ) {
+			$config['options']['processHtmlClass'] .= '|pp-math-render|pp-widget-container|pp-problem-card|pp-statement-content|pp-step-body|pp-answer-val';
+		}
+		return $config;
 	}
 
 	/**
@@ -233,19 +283,19 @@ final class Plugin {
 					foreach ( $lines as $line ) {
 						$trimmed = trim( $line );
 						if ( '' !== $trimmed ) {
-							$steps_array[] = $trimmed;
+							$steps_array[] = CPT::prepare_latex( $trimmed, true );
 						}
 					}
 				}
 
 				$items[] = [
-					'id'         => $badge_id ? $badge_id : (string) $post_id,
-					'title'      => get_the_title(),
+					'id'         => ! empty( $badge_id ) ? trim( $badge_id ) : '',
+					'title'      => CPT::prepare_latex( get_the_title(), false ),
 					'topic'      => ! empty( $topics ) ? $topics[0] : '',
 					'difficulty' => ! empty( $difficulties ) ? $difficulties[0] : 'medium',
 					'statement'  => apply_filters( 'the_content', get_the_content() ),
 					'steps'      => $steps_array,
-					'answer'     => $answer,
+					'answer'     => CPT::prepare_latex( $answer, false ),
 				];
 			}
 			wp_reset_postdata();
