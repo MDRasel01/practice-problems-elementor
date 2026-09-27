@@ -65,11 +65,13 @@
 	 */
 	function initLivePreview() {
 		const idInput = document.getElementById('pp_problem_id');
+		const titleInput = document.getElementById('pp_post_title');
 		const stepsInput = document.getElementById('pp_steps');
 		const answerInput = document.getElementById('pp_answer');
 
 		const badgePreview = document.getElementById('pp-preview-id-badge');
 		const badgeNotice = document.getElementById('pp-preview-no-badge-notice');
+		const titlePreview = document.getElementById('pp-preview-title');
 		const stepsBox = document.getElementById('pp-preview-steps-box');
 		const answerBox = document.getElementById('pp-preview-answer-box');
 		const statusBadge = document.getElementById('pp-preview-status');
@@ -101,7 +103,20 @@
 				}
 			}
 
-			// 2. Update Step-by-Step Solution
+			// 2. Update Post Title / Main Problem Question
+			if (titleInput && titlePreview) {
+				const titleVal = titleInput.value.trim();
+				if (titleVal !== '') {
+					const preparedTitle = prepareLatex(titleVal, false);
+					titlePreview.innerHTML = preparedTitle;
+					titlePreview.style.display = 'block';
+				} else {
+					titlePreview.innerHTML = '<span class="pp-preview-empty-hint"><em>(Enter problem title / question above...)</em></span>';
+					titlePreview.style.display = 'block';
+				}
+			}
+
+			// 3. Update Step-by-Step Solution
 			const rawSteps = stepsInput.value || '';
 			let stepsArray = [];
 
@@ -136,7 +151,7 @@
 				stepsBox.innerHTML = '<div class="pp-preview-empty-text">Enter solution steps on the left to see live LaTeX preview here...</div>';
 			}
 
-			// 3. Update Final Answer
+			// 4. Update Final Answer
 			const rawAnswer = answerInput ? answerInput.value.trim() : '';
 			if (rawAnswer !== '') {
 				const preparedAnswer = prepareLatex(rawAnswer, false);
@@ -146,7 +161,7 @@
 				answerBox.innerHTML = '<div class="pp-preview-empty-text">Enter final answer on the left...</div>';
 			}
 
-			// 4. Trigger MathJax Typesetting on preview card
+			// 5. Trigger MathJax Typesetting on preview card
 			triggerMathJax(previewCard, function () {
 				if (statusBadge) {
 					statusBadge.classList.remove('is-rendering');
@@ -180,6 +195,43 @@
 		if (idInput) {
 			idInput.addEventListener('input', onInputChange);
 			idInput.addEventListener('change', onInputChange);
+		}
+		if (titleInput) {
+			titleInput.addEventListener('input', onInputChange);
+			titleInput.addEventListener('change', onInputChange);
+
+			// Sync with Classic Editor title field (#title)
+			const wpClassicTitle = document.getElementById('title');
+			if (wpClassicTitle) {
+				if (wpClassicTitle.value && !titleInput.value) {
+					titleInput.value = wpClassicTitle.value;
+				}
+				titleInput.addEventListener('input', function () {
+					wpClassicTitle.value = this.value;
+				});
+				wpClassicTitle.addEventListener('input', function () {
+					titleInput.value = this.value;
+					onInputChange();
+				});
+			}
+
+			// Sync with Gutenberg editor if available
+			if (window.wp && wp.data && wp.data.select && wp.data.dispatch) {
+				try {
+					const coreEditor = wp.data.select('core/editor');
+					if (coreEditor) {
+						const gTitle = coreEditor.getEditedPostAttribute('title');
+						if (gTitle && !titleInput.value) {
+							titleInput.value = gTitle;
+						}
+						titleInput.addEventListener('input', function () {
+							try {
+								wp.data.dispatch('core/editor').editPost({ title: this.value });
+							} catch (e) {}
+						});
+					}
+				} catch (e) {}
+			}
 		}
 		if (stepsInput) {
 			stepsInput.addEventListener('input', onInputChange);

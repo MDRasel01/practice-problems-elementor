@@ -12,49 +12,98 @@
 	color: #1e293b;
 }
 
-/* Problem ID Badge Row */
-.pp-meta-badge-row {
+/* Top Row: Problem ID Badge (Left) & Post Title / Main Problem (Right) */
+.pp-meta-top-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 24px;
 	background: #ffffff;
 	border: 1px solid #e2e8f0;
 	border-radius: 10px;
-	padding: 16px 20px;
+	padding: 18px 22px;
 	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.pp-meta-badge-row label {
-	display: block;
+@media (max-width: 960px) {
+	.pp-meta-top-row {
+		grid-template-columns: 1fr;
+		gap: 16px;
+	}
+}
+
+.pp-meta-top-col {
+	display: flex;
+	flex-direction: column;
+}
+
+.pp-meta-top-col label {
+	display: flex;
+	align-items: center;
+	gap: 7px;
 	font-size: 14px;
 	font-weight: 600;
 	color: #0f172a;
-	margin-bottom: 6px;
+	margin-bottom: 8px;
 }
 
-.pp-badge-input-wrap {
+.pp-meta-top-col label .dashicons {
+	color: #3b82f6;
+	font-size: 17px;
+	width: 17px;
+	height: 17px;
+}
+
+.pp-tag-optional {
+	font-size: 11px;
+	font-weight: 500;
+	color: #64748b;
+	background: #f1f5f9;
+	padding: 2px 7px;
+	border-radius: 4px;
+}
+
+.pp-tag-main {
+	font-size: 11px;
+	font-weight: 600;
+	color: #0284c7;
+	background: #e0f2fe;
+	padding: 2px 7px;
+	border-radius: 4px;
+}
+
+.pp-badge-input-wrap,
+.pp-title-input-wrap {
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	max-width: 600px;
+	width: 100%;
 }
 
-.pp-badge-input-wrap input[type="text"] {
-	flex: 1;
-	padding: 8px 12px;
+.pp-meta-top-col input[type="text"] {
+	width: 100%;
+	padding: 9px 13px;
 	font-size: 14px;
+	line-height: 1.5;
 	border: 1px solid #cbd5e1;
 	border-radius: 6px;
 	transition: all 0.2s ease;
 	outline: none;
+	background: #ffffff;
 }
 
-.pp-badge-input-wrap input[type="text"]:focus {
+.pp-meta-top-col input[type="text"]:focus {
 	border-color: #3b82f6;
 	box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
-.pp-meta-badge-row .description {
+.pp-main-title-input {
+	font-weight: 500;
+}
+
+.pp-meta-top-col .description {
 	margin: 6px 0 0 0;
 	font-size: 12px;
 	color: #64748b;
+	line-height: 1.4;
 }
 
 /* Split Layout: Inputs on Left, Live Preview on Right */
@@ -275,6 +324,23 @@
 	font-size: 12px;
 	color: #94a3b8;
 	font-style: italic;
+}
+
+/* Problem Title in Live Preview Card (mirrors frontend card) */
+.pp-preview-title-box {
+	margin: 8px 0 16px 0;
+	padding: 12px 14px;
+	background: #ffffff;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+}
+
+.pp-preview-title-box .pp-problem-title {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	color: #0f172a;
+	line-height: 1.5;
 }
 
 .pp-preview-section-title {

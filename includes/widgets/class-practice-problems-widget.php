@@ -318,9 +318,10 @@ class Practice_Problems_Widget extends Widget_Base {
 		$repeater->add_control(
 			'statement',
 			[
-				'label'       => esc_html__( 'Problem Statement', 'practice-problems-el' ),
+				'label'       => esc_html__( 'Post Title / Problem Question (Main)', 'practice-problems-el' ),
 				'type'        => Controls_Manager::TEXTAREA,
 				'default'     => esc_html__( 'Evaluate lim(x→3) of (x² - 9) / (x - 3).', 'practice-problems-el' ),
+				'description' => esc_html__( 'Main problem title or question. LaTeX formulas supported (e.g. \\frac{a+b}{c}).', 'practice-problems-el' ),
 				'label_block' => true,
 			]
 		);
@@ -1551,12 +1552,17 @@ class Practice_Problems_Widget extends Widget_Base {
 					// so that the heading is only controlled by the widget controls and never appears twice!
 					$clean_content = preg_replace( '/<h[1-6][^>]*>\s*(Step-by-step\s+solution|Step\s+by\s+step\s+solution|Solution)\s*<\/h[1-6]>/i', '', $raw_content );
 
+					$cpt_title = get_the_title();
+					if ( empty( $cpt_title ) ) {
+						$cpt_title = get_post_meta( $pid, '_pp_title', true );
+					}
+
 					$problems[] = [
 						'problem_id'             => ! empty( $badge_id ) ? trim( $badge_id ) : '',
-						'title'                  => \PracticeProblems\CPT::prepare_latex( get_the_title(), false ),
+						'title'                  => \PracticeProblems\CPT::prepare_latex( $cpt_title, false ),
 						'topic'                  => ! empty( $post_topics ) ? implode( ', ', $post_topics ) : '',
 						'difficulty'             => ! empty( $diffs ) ? $diffs[0] : 'medium',
-						'statement'              => \PracticeProblems\CPT::prepare_latex( get_the_title(), false ),
+						'statement'              => \PracticeProblems\CPT::prepare_latex( $cpt_title, false ),
 						'solution_btn_text'      => $solution_btn_show_text,
 						'solution_btn_hide_text' => $solution_btn_hide_text,
 						'show_solution_heading'  => $show_solution_heading,

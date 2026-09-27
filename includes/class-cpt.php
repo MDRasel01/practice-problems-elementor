@@ -281,21 +281,49 @@ class CPT {
 		?>
 		<div class="pp-meta-box-wrap">
 
-			<!-- Problem ID Badge Row (Optional Field) -->
-			<div class="pp-meta-badge-row">
-				<label for="pp_problem_id"><?php esc_html_e( 'Problem ID Badge Text', 'practice-problems-el' ); ?></label>
-				<div class="pp-badge-input-wrap">
-					<input type="text" 
-						   id="pp_problem_id" 
-						   name="pp_problem_id" 
-						   value="<?php echo esc_attr( $problem_id ); ?>" 
-						   class="regular-text" 
-						   placeholder="<?php esc_attr_e( 'e.g. Problem 01 or EX-101 (Leave empty to hide badge)', 'practice-problems-el' ); ?>" 
-						   autocomplete="off" />
+			<!-- Top Row: Problem ID Badge (Left) & Post Title / Main Problem (Right) -->
+			<div class="pp-meta-top-row">
+				<!-- Left Column: Problem ID Badge (Optional Field) -->
+				<div class="pp-meta-top-col pp-meta-col-id">
+					<label for="pp_problem_id">
+						<span class="dashicons dashicons-tag"></span>
+						<span><?php esc_html_e( 'Problem ID Badge Text', 'practice-problems-el' ); ?></span>
+						<span class="pp-tag-optional"><?php esc_html_e( 'Optional', 'practice-problems-el' ); ?></span>
+					</label>
+					<div class="pp-badge-input-wrap">
+						<input type="text" 
+							   id="pp_problem_id" 
+							   name="pp_problem_id" 
+							   value="<?php echo esc_attr( $problem_id ); ?>" 
+							   class="regular-text" 
+							   placeholder="<?php esc_attr_e( 'e.g. Problem 01 or EX-101 (Leave empty to hide badge)', 'practice-problems-el' ); ?>" 
+							   autocomplete="off" />
+					</div>
+					<p class="description">
+						<?php esc_html_e( 'Optional problem ID or badge (e.g. Problem 01, Ex-101). If left blank, no badge will be displayed.', 'practice-problems-el' ); ?>
+					</p>
 				</div>
-				<p class="description">
-					<?php esc_html_e( 'Optional problem ID or badge (e.g. Problem 01, Ex-101). If left blank, no badge will be displayed.', 'practice-problems-el' ); ?>
-				</p>
+
+				<!-- Right Column: Post Title / Main Problem Question (The Red Box area!) -->
+				<div class="pp-meta-top-col pp-meta-col-title">
+					<label for="pp_post_title">
+						<span class="dashicons dashicons-heading"></span>
+						<span><?php esc_html_e( 'Post Title (Main Problem / Question)', 'practice-problems-el' ); ?></span>
+						<span class="pp-tag-main"><?php esc_html_e( 'Main', 'practice-problems-el' ); ?></span>
+					</label>
+					<div class="pp-title-input-wrap">
+						<input type="text" 
+							   id="pp_post_title" 
+							   name="pp_post_title" 
+							   value="<?php echo esc_attr( $post->post_title ); ?>" 
+							   class="regular-text pp-main-title-input" 
+							   placeholder="<?php esc_attr_e( 'Enter main problem title / question (e.g. Evaluate \\lim_{x \\to 0} \\frac{\\sin x}{x})', 'practice-problems-el' ); ?>" 
+							   autocomplete="off" />
+					</div>
+					<p class="description">
+						<?php esc_html_e( 'Main title & problem question. Full LaTeX supported (e.g. \\frac{a+b}{c}). Syncs with WordPress Post Title.', 'practice-problems-el' ); ?>
+					</p>
+				</div>
 			</div>
 
 			<!-- Split Layout: LaTeX Input on Left, Live LaTeX Preview on Right -->
@@ -367,6 +395,13 @@ class CPT {
 							</span>
 						</div>
 
+						<!-- Main Problem Title Preview -->
+						<div class="pp-preview-title-box">
+							<h3 id="pp-preview-title" class="pp-problem-title pp-math-render">
+								<?php echo ! empty( $post->post_title ) ? wp_kses_post( self::prepare_latex( $post->post_title, false ) ) : '<span class="pp-preview-empty-hint"><em>' . esc_html__( '(Enter problem title / question above...)', 'practice-problems-el' ) . '</em></span>'; ?>
+							</h3>
+						</div>
+
 						<div class="pp-preview-section-title"><?php esc_html_e( 'Step-by-Step Solution', 'practice-problems-el' ); ?></div>
 						<div id="pp-preview-steps-box" class="pp-preview-steps-box pp-math-render">
 							<!-- Dynamic real-time preview populated by JS -->
@@ -400,6 +435,22 @@ class CPT {
 
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
 			return;
+		}
+
+		// Update Post Title (Main Problem / Question)
+		if ( isset( $_POST['pp_post_title'] ) ) {
+			$new_title = sanitize_text_field( wp_unslash( $_POST['pp_post_title'] ) );
+			update_post_meta( $post_id, '_pp_title', $new_title );
+
+			if ( ! empty( $new_title ) && $new_title !== get_the_title( $post_id ) ) {
+				global $wpdb;
+				$wpdb->update(
+					$wpdb->posts,
+					[ 'post_title' => $new_title ],
+					[ 'ID' => $post_id ]
+				);
+				clean_post_cache( $post_id );
+			}
 		}
 
 		if ( isset( $_POST['pp_problem_id'] ) ) {
