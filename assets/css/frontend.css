@@ -623,18 +623,30 @@
 
 /* 9. MATHEMATICAL NOTATION & MATHJAX SUPPORT */
 .pp-math-render {
-    overflow-x: auto;
-    overflow-y: hidden;
     max-width: 100%;
+}
+
+div.pp-math-render,
+section.pp-math-render {
     -webkit-overflow-scrolling: touch;
 }
 
-.pp-math-render mjx-container[jax="SVG"] {
-    margin: 4px 0 !important;
+/* INLINE MathJax SVG: no vertical margins, stays naturally centered and aligned with text flow */
+.pp-math-render mjx-container[jax="SVG"]:not([display="true"]) {
+    margin: 0 !important;
+    padding: 0 !important;
     outline: none;
-    vertical-align: middle;
+    display: inline-block !important;
+    vertical-align: 0 !important;
+    line-height: 0 !important;
 }
 
+.pp-math-render mjx-container[jax="SVG"]:not([display="true"]) > svg {
+    margin: 0 !important;
+    display: inline-block !important;
+}
+
+/* DISPLAY / BLOCK MathJax SVG */
 .pp-math-render mjx-container[jax="SVG"][display="true"] {
     display: block !important;
     text-align: center;
@@ -642,13 +654,16 @@
     max-width: 100%;
     overflow-x: auto;
     overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
 }
 
 .pp-step-body mjx-container[jax="SVG"][display="true"] {
     margin: 8px 0 !important;
 }
 
-.pp-answer-val mjx-container[jax="SVG"] {
-    vertical-align: middle;
+.pp-answer-val mjx-container[jax="SVG"]:not([display="true"]) {
+    vertical-align: middle !important;
     display: inline-block !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }

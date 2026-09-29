@@ -126,12 +126,12 @@ body.single-math_note header.page-header,
 
 /* 4. MAIN CONTENT AREA */
 .tn-main-content {
-    min-width: 0; /* Prevents overflow issues */
+    min-widgeth: 0; /* Prevents overflow issues */
 }
 
 /* Breadcrumbs */
 .tn-breadcrumb {
-    display: flex;
+    display: flx;
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
@@ -163,7 +163,7 @@ body.single-math_note header.page-header,
 /* Note Header */
 .tn-note-header {
     margin-bottom: 36px;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid #e1f5f9;
     padding-bottom: 28px;
 }
 
@@ -343,7 +343,7 @@ body.single-math_note header.page-header,
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 28px;
+    min-widgeth: 28px;
     height: 28px;
     border-radius: 50%;
     background: #e0e7ff;
@@ -636,7 +636,7 @@ body.single-math_note header.page-header,
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, box-color 0.22s ease;
     text-decoration: none !important;
     position: relative;
     box-sizing: border-box;
@@ -762,8 +762,14 @@ body.single-math_note header.page-header,
 }
 
 .tn-chapter-box:hover {
-    border-color: #cbd5e1;
+    background: #cbd5e1;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.tn-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .tn-chapter-box-header {
@@ -909,5 +915,114 @@ body.single-math_note header.page-header,
 .tn-toc-item-sub > .tn-toc-link:hover,
 .tn-toc-item-sub > .tn-toc-link.active {
     color: #2563eb;
+}
+
+/* =========================================================
+   14. INLINE MATH EQUATION VERTICAL ALIGNMENT & SPACING
+========================================================= */
+.tn-widget-container .lcs-equation-inline,
+.tn-sub-section-content .lcs-equation-inline,
+.tn-accordion-content .lcs-equation-inline {
+    display: inline !important;
+    vertical-align: baseline !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 0.12em;
+    line-height: normal;
+}
+
+.tn-widget-container mjx-container[jax="SVG"]:not([display="true"]),
+.tn-sub-section-content mjx-container[jax="SVG"]:not([display="true"]),
+.tn-accordion-content mjx-container[jax="SVG"]:not([display="true"]),
+.tn-widget-container mjx-container:not([display="true"]) {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: inline-block !important;
+    vertical-align: 0 !important;
+    line-height: 0 !important;
+}
+
+.tn-widget-container mjx-container[jax="SVG"]:not([display="true"]) > svg,
+.tn-sub-section-content mjx-container[jax="SVG"]:not([display="true"]) > svg,
+.tn-accordion-content mjx-container[jax="SVG"]:not([display="true"]) > svg {
+    margin: 0 !important;
+    display: inline-block !important;
+}
+
+/* =========================================================
+   15. DISPLAY & BLOCK MATH EQUATIONS & COMPACT SPACING
+========================================================= */
+.tn-widget-container .lcs-equation-display,
+.tn-sub-section-content .lcs-equation-display,
+.tn-accordion-content .lcs-equation-display,
+.tn-definition-content .lcs-equation-display,
+.tn-example-problem-text .lcs-equation-display,
+.tn-example-solution-value .lcs-equation-display {
+    display: block !important;
+    margin: 0.35rem 0 !important;
+    padding: 0 !important;
+    text-align: center;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    clear: both;
+}
+
+.tn-widget-container mjx-container[display="true"],
+.tn-sub-section-content mjx-container[display="true"],
+.tn-accordion-content mjx-container[display="true"],
+.tn-definition-content mjx-container[display="true"],
+.tn-example-problem-text mjx-container[display="true"],
+.tn-example-solution-value mjx-container[display="true"] {
+    margin: 0.35rem 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    text-align: center;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    line-height: normal !important;
+}
+
+/* Consecutive display math equations have minimal clean spacing */
+.tn-widget-container mjx-container[display="true"] + mjx-container[display="true"],
+.tn-sub-section-content mjx-container[display="true"] + mjx-container[display="true"],
+.tn-accordion-content mjx-container[display="true"] + mjx-container[display="true"],
+.tn-definition-content mjx-container[display="true"] + mjx-container[display="true"],
+.tn-example-problem-text mjx-container[display="true"] + mjx-container[display="true"],
+.tn-example-solution-value mjx-container[display="true"] + mjx-container[display="true"] {
+    margin-top: 0.2rem !important;
+}
+
+/* Paragraph spacing inside notes */
+.tn-sub-section-content p,
+.tn-accordion-content p,
+.tn-definition-content p,
+.tn-example-problem-text p,
+.tn-example-solution-value p {
+    margin-top: 0 !important;
+    margin-bottom: 8px !important;
+    line-height: 1.65;
+}
+
+.tn-sub-section-content p:last-child,
+.tn-accordion-content p:last-child,
+.tn-definition-content p:last-child,
+.tn-example-problem-text p:last-child,
+.tn-example-solution-value p:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Prevent empty paragraphs or br-only paragraphs from creating space */
+.tn-sub-section-content p:empty,
+.tn-sub-section-content p:has(> br:only-child),
+.tn-accordion-content p:empty,
+.tn-accordion-content p:has(> br:only-child),
+.tn-definition-content p:empty,
+.tn-definition-content p:has(> br:only-child) {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 0 !important;
 }
 

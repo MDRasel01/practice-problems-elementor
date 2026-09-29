@@ -433,10 +433,12 @@
 }
 
 /* MathJax SVG styling inside preview */
-.pp-preview-card mjx-container[jax="SVG"] {
-	margin: 6px 0 !important;
+.pp-preview-card mjx-container[jax="SVG"]:not([display="true"]) {
+	margin: 0 !important;
+	padding: 0 !important;
 	outline: none;
 	display: inline-block;
+	vertical-align: 0 !important;
 }
 
 .pp-preview-card mjx-container[jax="SVG"][display="true"] {

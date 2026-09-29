@@ -37,46 +37,81 @@
 
 	/**
 	 * Prepare LaTeX string for MathJax rendering.
-	 * Detects raw LaTeX formulas (e.g. \frac{a+b}{c} or z = a + bi)
-	 * and wraps them in $$...$$ or \(...\) so MathJax typesets without showing raw code.
+	 * Detects and normalizes LaTeX formulas, cleans alignment and spacing, and prevents unwanted extra gaps.
 	 */
 	function prepareLatex(input, isBlock) {
 		if (typeof isBlock === 'undefined') isBlock = true;
 		if (!input || typeof input !== 'string') return '';
 
 		let text = input.trim();
+		if (!text) return '';
 
-		// Check if already has math delimiters: $$, \[, \(, or $...$
-		const hasDelimiters = /\$\$|\\\[|\\\(|(?<!\\)\$.+?(?<!\\)\$/.test(text);
-		if (hasDelimiters) {
-			return text;
-		}
+		// 1. Normalize line endings & collapse excessive blank lines
+		text = text.replace(/\r\n|\r/g, '\n').replace(/\n{3,}/g, '\n\n');
 
-		// Convert standard LaTeX text formatting commands to HTML
+		// 2. Fix broken LaTeX text structures like \text{\hspace{...}\textbf{Ans}.}
+		text = text.replace(/\\text\s*\{\s*\\hspace\{[^}]+\}\s*(\\textbf\{[^}]+\}|[^}]+)\s*\}/g, function(m, p1) {
+			const inner = p1.trim();
+			const bm = inner.match(/\\textbf\{([^}]+)\}/);
+			if (bm) {
+				return '\\qquad \\mathbf{' + bm[1] + '}';
+			}
+			return '\\qquad \\text{' + inner + '}';
+		});
+
+		// 3. Fix \hspace before \textbf{Ans} / Ans
+		text = text.replace(/\\hspace\{[0-9.]+(?:in|cm|pt|mm|em|ex)\}\s*(\\textbf\{[^}]+\}|\bAns\b)/g, '\\qquad $1');
+
+		// 4. Merge adjacent \begin{aligned} ... \end{aligned} blocks
+		text = text.replace(/\\end\{aligned\}[\s\$]*\\begin\{aligned\}/g, ' \\\\\n');
+
+		// 5. Clean up each \begin{aligned} ... \end{aligned} block
+		text = text.replace(/\\begin\{aligned\}([\s\S]*?)\\end\{aligned\}/g, function(m, raw) {
+			const rawLines = raw.split(/\\\\|\n/);
+			const cleanLines = [];
+			for (let i = 0; i < rawLines.length; i++) {
+				let l = rawLines[i].trim();
+				if (!l || l === '\\') continue;
+				l = l.replace(/^\\hspace\{[0-9.]+(?:in|cm|pt|mm|em|ex)\}\s*/, '');
+				l = l.replace(/\\hspace\{[0-9.]+(?:in|cm)\}/g, '\\qquad');
+				if (l.indexOf('&') === -1 && l.indexOf('=') !== -1) {
+					l = l.replace(/(?<!\\)=/, '&=');
+				}
+				cleanLines.push(l);
+			}
+			return '\\begin{aligned}\n  ' + cleanLines.join(' \\\\\n  ') + '\n\\end{aligned}';
+		});
+
+		// 6. Extract and protect math blocks
+		const mathBlocks = [];
+		const mathPattern = /(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)|\$(?:[^\$\n\r]+?)\$|\\begin\{(?:aligned|align\*?|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|cases|equation\*?|gather\*?)\}[\s\S]*?\\end\{(?:aligned|align\*?|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|cases|equation\*?|gather\*?)\})/g;
+
+		text = text.replace(mathPattern, function(match) {
+			const idx = mathBlocks.length;
+			let block = match.trim();
+			if (block.startsWith('\\begin{') || block.startsWith('$\\begin{')) {
+				const inner = block.replace(/^\$+|\$+$/g, '').trim();
+				block = '$$\n' + inner + '\n$$';
+			}
+			mathBlocks.push(block);
+			return '___MATH_BLOCK_' + idx + '___';
+		});
+
+		// 7. Format text portions
 		text = text.replace(/\\textbf\{([^}]+)\}/g, '<strong>$1</strong>');
 		text = text.replace(/\\textit\{([^}]+)\}/g, '<em>$1</em>');
+		text = text.replace(/\\emph\{([^}]+)\}/g, '<em>$1</em>');
 		text = text.replace(/\\underline\{([^}]+)\}/g, '<u>$1</u>');
+		text = text.replace(/\\newline/g, '<br>');
+		text = text.replace(/\\quad/g, '&emsp;');
+		text = text.replace(/\\qquad/g, '&emsp;&emsp;');
 
-		// Check for common LaTeX math commands or exponent/subscript syntax
-		const hasLatexCmd = /\\(frac|sqrt|sin|cos|tan|cot|sec|csc|cosec|log|ln|lim|sum|int|prod|alpha|beta|gamma|theta|pi|infty|pm|times|cdot|le|ge|neq|approx|vec|hat|begin|end|matrix|cases|over|to|partial)\b/i.test(text);
-		const hasMathNotation = /[a-zA-Z0-9]\^[0-9a-zA-Z{]|_[0-9a-zA-Z{]/.test(text);
+		// Replace newlines only in plain text portions
+		text = text.replace(/\n/g, '<br>');
 
-		if (hasLatexCmd || hasMathNotation) {
-			const prefixMatch = text.match(/^(.*?\b(?:Prove\s+that|Evaluate|Find|Show\s+that|Calculate|Given\s+that|Where|If|Then)[:\s]+)(.+)$/i);
-			if (prefixMatch && prefixMatch[1] && prefixMatch[2]) {
-				const prefix = prefixMatch[1];
-				const mathPart = prefixMatch[2].trim();
-				return prefix + (isBlock ? '$$' + mathPart + '$$' : '\\(' + mathPart + '\\)');
-			} else if (!/[a-zA-Z]{4,}\s+[a-zA-Z]{4,}/.test(text)) {
-				return isBlock ? '$$' + text + '$$' : '\\(' + text + '\\)';
-			} else {
-				return text.replace(/(\\\b(?:frac\{[^{}]*\}\{[^{}]*\}|[a-zA-Z]+(?:\{[^{}]*\})?|[a-zA-Z0-9]+(?:\^[0-9a-zA-Z{}]|_[0-9a-zA-Z{}])+)(?:[^$\n\r<]*[=<>][^$\n\r<]*)?)/g, function (m) {
-					if (m.startsWith('<strong>') || m.startsWith('<')) {
-						return m;
-					}
-					return '\\(' + m + '\\)';
-				});
-			}
+		// 8. Restore math blocks
+		for (let i = 0; i < mathBlocks.length; i++) {
+			text = text.replace('___MATH_BLOCK_' + i + '___', mathBlocks[i]);
 		}
 
 		return text;
@@ -565,9 +600,7 @@
 			if (!rawContent || !rawContent.trim()) {
 				return '<span class="mn-preview-placeholder">Live preview will appear here as you type...</span>';
 			}
-			const prepared = prepareLatex(rawContent, !!isPureFormula);
-			// Replace newlines with <br> for plain text portions if not pure formula
-			return prepared.replace(/\r?\n/g, '<br>');
+			return prepareLatex(rawContent, !!isPureFormula);
 		}
 
 		/**
@@ -584,7 +617,7 @@
 			}
 
 			const prepared = prepareLatex(rawText, !!isPureFormula);
-			$rendered.html(prepared.replace(/\r?\n/g, '<br>'));
+			$rendered.html(prepared);
 
 			const previewKey = $preview.attr('id') || Math.random().toString();
 			if (this.renderDebounceTimers[previewKey]) {

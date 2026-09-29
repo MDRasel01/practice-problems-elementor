@@ -200,7 +200,7 @@ class Topic_Notes_Widget extends Widget_Base {
 			[
 				'label'     => esc_html__( 'TOC Title', 'practice-problems-el' ),
 				'type'      => Controls_Manager::TEXT,
-				'default'   => esc_html__( 'On this page', 'practice-problems-el' ),
+				'default'   => esc_html__( 'ON THIS PAGE', 'practice-problems-el' ),
 				'condition' => [ 'show_toc' => 'yes' ],
 			]
 		);
@@ -886,103 +886,172 @@ class Topic_Notes_Widget extends Widget_Base {
 		$this->end_controls_section();
 
 		/* =========================================================
-		   STYLE TAB — 6. Section Headings (H2)
+		   STYLE TAB — 6. Section Content Boxes (Individual Cards)
 		========================================================= */
 		$this->start_controls_section(
-			'section_style_headings',
+			'section_style_section_boxes',
 			[
-				'label' => esc_html__( 'Section Headings (H2)', 'practice-problems-el' ),
+				'label' => esc_html__( 'Section Content Boxes', 'practice-problems-el' ),
 				'tab'   => Controls_Manager::TAB_STYLE,
+			]
+		);
+
+		$this->add_control(
+			'box_card_heading',
+			[
+				'label' => esc_html__( 'Box / Card Container', 'practice-problems-el' ),
+				'type'  => Controls_Manager::HEADING,
+			]
+		);
+
+		$this->add_control(
+			'box_bg_color',
+			[
+				'label'     => esc_html__( 'Background Color', 'practice-problems-el' ),
+				'type'      => Controls_Manager::COLOR,
+				'default'   => '#ffffff',
+				'selectors' => [
+					'{{WRAPPER}} .tn-sub-section-card' => 'background-color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_group_control(
+			Group_Control_Border::get_type(),
+			[
+				'name'     => 'box_border',
+				'selector' => '{{WRAPPER}} .tn-sub-section-card',
+			]
+		);
+
+		$this->add_responsive_control(
+			'box_border_radius',
+			[
+				'label'      => esc_html__( 'Border Radius', 'practice-problems-el' ),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => [ 'px', '%' ],
+				'selectors'  => [
+					'{{WRAPPER}} .tn-sub-section-card' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'box_padding',
+			[
+				'label'      => esc_html__( 'Padding', 'practice-problems-el' ),
+				'type'       => Controls_Manager::DIMENSIONS,
+				'size_units' => [ 'px', 'em' ],
+				'selectors'  => [
+					'{{WRAPPER}} .tn-sub-section-card' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_group_control(
+			Group_Control_Box_Shadow::get_type(),
+			[
+				'name'     => 'box_shadow',
+				'selector' => '{{WRAPPER}} .tn-sub-section-card',
+			]
+		);
+
+		$this->add_responsive_control(
+			'box_margin_bottom',
+			[
+				'label'      => esc_html__( 'Space Between Boxes', 'practice-problems-el' ),
+				'type'       => Controls_Manager::SLIDER,
+				'size_units' => [ 'px' ],
+				'range'      => [ 'px' => [ 'min' => 0, 'max' => 80 ] ],
+				'default'    => [ 'size' => 24, 'unit' => 'px' ],
+				'selectors'  => [
+					'{{WRAPPER}} .tn-sub-section-card' => 'margin-bottom: {{SIZE}}{{UNIT}};',
+				],
+			]
+		);
+
+		$this->add_control(
+			'box_title_heading',
+			[
+				'label'     => esc_html__( 'Section Title / Header', 'practice-problems-el' ),
+				'type'      => Controls_Manager::HEADING,
+				'separator' => 'before',
 			]
 		);
 
 		$this->add_group_control(
 			Group_Control_Typography::get_type(),
 			[
-				'name'     => 'section_heading_typography',
-				'selector' => '{{WRAPPER}} .tn-section-heading',
+				'name'     => 'section_title_typography',
+				'selector' => '{{WRAPPER}} .tn-sub-section-title',
 			]
 		);
 
 		$this->add_control(
-			'section_heading_color',
+			'section_title_color',
 			[
-				'label'     => esc_html__( 'Heading Color', 'practice-problems-el' ),
+				'label'     => esc_html__( 'Title Color', 'practice-problems-el' ),
 				'type'      => Controls_Manager::COLOR,
 				'default'   => '#0f172a',
 				'selectors' => [
-					'{{WRAPPER}} .tn-section-heading' => 'color: {{VALUE}};',
+					'{{WRAPPER}} .tn-sub-section-title' => 'color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'section_title_margin_bottom',
+			[
+				'label'      => esc_html__( 'Title Spacing Bottom', 'practice-problems-el' ),
+				'type'       => Controls_Manager::SLIDER,
+				'size_units' => [ 'px' ],
+				'range'      => [ 'px' => [ 'min' => 0, 'max' => 50 ] ],
+				'default'    => [ 'size' => 12, 'unit' => 'px' ],
+				'selectors'  => [
+					'{{WRAPPER}} .tn-sub-section-title' => 'margin-bottom: {{SIZE}}{{UNIT}};',
 				],
 			]
 		);
 
 		$this->add_control(
-			'section_heading_border_color',
+			'box_content_heading',
 			[
-				'label'     => esc_html__( 'Bottom Border Divider Color', 'practice-problems-el' ),
-				'type'      => Controls_Manager::COLOR,
-				'default'   => '#e2e8f0',
-				'selectors' => [
-					'{{WRAPPER}} .tn-section-heading' => 'border-bottom-color: {{VALUE}};',
-				],
-			]
-		);
-
-		$this->add_responsive_control(
-			'section_heading_margin_bottom',
-			[
-				'label'      => esc_html__( 'Heading Bottom Margin', 'practice-problems-el' ),
-				'type'       => Controls_Manager::SLIDER,
-				'size_units' => [ 'px' ],
-				'selectors'  => [
-					'{{WRAPPER}} .tn-section-heading' => 'margin-bottom: {{SIZE}}{{UNIT}};',
-				],
-			]
-		);
-
-		$this->add_responsive_control(
-			'section_block_spacing',
-			[
-				'label'      => esc_html__( 'Space Between Sections', 'practice-problems-el' ),
-				'type'       => Controls_Manager::SLIDER,
-				'size_units' => [ 'px' ],
-				'range'      => [ 'px' => [ 'min' => 10, 'max' => 100 ] ],
-				'default'    => [ 'size' => 44, 'unit' => 'px' ],
-				'selectors'  => [
-					'{{WRAPPER}} .tn-section' => 'margin-bottom: {{SIZE}}{{UNIT}};',
-				],
-			]
-		);
-
-		$this->end_controls_section();
-
-		/* =========================================================
-		   STYLE TAB — 7. Overview & General Text
-		========================================================= */
-		$this->start_controls_section(
-			'section_style_overview',
-			[
-				'label' => esc_html__( 'Overview / Body Text', 'practice-problems-el' ),
-				'tab'   => Controls_Manager::TAB_STYLE,
+				'label'     => esc_html__( 'Section Content / Text', 'practice-problems-el' ),
+				'type'      => Controls_Manager::HEADING,
+				'separator' => 'before',
 			]
 		);
 
 		$this->add_group_control(
 			Group_Control_Typography::get_type(),
 			[
-				'name'     => 'overview_typography',
-				'selector' => '{{WRAPPER}} .tn-section-body, {{WRAPPER}} .tn-section-body p, {{WRAPPER}} .tn-section-body li',
+				'name'     => 'section_content_typography',
+				'selector' => '{{WRAPPER}} .tn-sub-section-content, {{WRAPPER}} .tn-sub-section-content p, {{WRAPPER}} .tn-sub-section-content li',
 			]
 		);
 
 		$this->add_control(
-			'overview_color',
+			'section_content_color',
 			[
 				'label'     => esc_html__( 'Text Color', 'practice-problems-el' ),
 				'type'      => Controls_Manager::COLOR,
 				'default'   => '#334155',
 				'selectors' => [
-					'{{WRAPPER}} .tn-section-body, {{WRAPPER}} .tn-section-body p, {{WRAPPER}} .tn-section-body li' => 'color: {{VALUE}};',
+					'{{WRAPPER}} .tn-sub-section-content, {{WRAPPER}} .tn-sub-section-content p, {{WRAPPER}} .tn-sub-section-content li' => 'color: {{VALUE}};',
+				],
+			]
+		);
+
+		$this->add_responsive_control(
+			'section_content_paragraph_spacing',
+			[
+				'label'      => esc_html__( 'Paragraph Spacing', 'practice-problems-el' ),
+				'type'       => Controls_Manager::SLIDER,
+				'size_units' => [ 'px' ],
+				'range'      => [ 'px' => [ 'min' => 0, 'max' => 40 ] ],
+				'default'    => [ 'size' => 14, 'unit' => 'px' ],
+				'selectors'  => [
+					'{{WRAPPER}} .tn-sub-section-content p:not(:last-child)' => 'margin-bottom: {{SIZE}}{{UNIT}};',
 				],
 			]
 		);
@@ -2038,6 +2107,115 @@ class Topic_Notes_Widget extends Widget_Base {
 	/**
 	 * Render widget HTML.
 	 */
+	/**
+	 * Prepare LaTeX and mixed text formatting for HTML & MathJax rendering.
+	 * Eliminates unwanted extra vertical whitespace and ensures exact live output matching LaTeX input.
+	 */
+	public static function prepare_latex_content( $input, $is_content_body = false ) {
+		if ( empty( $input ) || ! is_string( $input ) ) {
+			return '';
+		}
+		$text = trim( $input );
+		if ( '' === $text ) {
+			return '';
+		}
+
+		// 1. Normalize line endings and collapse excessive blank lines
+		$text = preg_replace( "/\r\n|\r/", "\n", $text );
+		$text = preg_replace( "/\n{3,}/", "\n\n", $text );
+
+		// 2. Fix broken LaTeX text structures like \text{\hspace{...}\textbf{Ans}.}
+		$text = preg_replace_callback( '/\\\\text\s*\{\s*\\\\hspace\{[^}]+\}\s*(\\\\textbf\{[^}]+\}|[^}]+)\s*\}/s', function ( $m ) {
+			$inner = trim( $m[1] );
+			if ( preg_match( '/\\\\textbf\{([^}]+)\}/', $inner, $bm ) ) {
+				return '\\qquad \\mathbf{' . $bm[1] . '}';
+			}
+			return '\\qquad \\text{' . $inner . '}';
+		}, $text );
+
+		// 3. Normalize excessive \hspace before Ans / \textbf{Ans} to standard math spacing
+		$text = preg_replace( '/\\\\hspace\{[0-9.]+(?:in|cm|pt|mm|em|ex)\}\s*(\\\\textbf\{[^}]+\}|\bAns\b)/', '\\qquad $1', $text );
+
+		// 4. Merge adjacent \begin{aligned} ... \end{aligned} environments separated only by delimiters/newlines
+		$text = preg_replace( '/\\\\end\{aligned\}[\s\$]*\\\\begin\{aligned\}/s', " \\\\\n", $text );
+
+		// 5. Clean up each \begin{aligned} ... \end{aligned} block for optimal alignment and spacing
+		$text = preg_replace_callback( '/\\\\begin\{aligned\}(.*?)\\\\end\{aligned\}/s', function ( $m ) {
+			$raw       = $m[1];
+			$raw_lines = preg_split( '/\\\\\\\\|\n/', $raw );
+			$clean_lines = [];
+			foreach ( $raw_lines as $line ) {
+				$l = trim( $line );
+				if ( '' === $l || '\\' === $l ) {
+					continue;
+				}
+				// Remove leading \hspace{...in/cm}
+				$l = preg_replace( '/^\\\\hspace\{[0-9.]+(?:in|cm|pt|mm|em|ex)\}\s*/', '', $l );
+				// Replace remaining large \hspace with \qquad
+				$l = preg_replace( '/\\\\hspace\{[0-9.]+(?:in|cm)\}/', '\\qquad', $l );
+				// Ensure alignment symbol & is placed before first = if missing
+				if ( strpos( $l, '&' ) === false && strpos( $l, '=' ) !== false ) {
+					$l = preg_replace( '/(?<!\\\\)=/', '&=', $l, 1 );
+				}
+				$clean_lines[] = $l;
+			}
+			return "\\begin{aligned}\n  " . implode( " \\\\\n  ", $clean_lines ) . "\n\\end{aligned}";
+		}, $text );
+
+		$math_blocks = [];
+
+		// 6. Extract and preserve math blocks & environments so HTML processors do not mangle them
+		$math_pattern = '/(\$\$.*?\$\$|\\\\\[.*?\\\\\]|\\\\\(.*?\\\\\)|(?:\$|\$\$)?\s*\\\\begin\{(?:aligned|align\*?|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|cases|equation\*?|gather\*?)\}.*?\\\\end\{(?:aligned|align\*?|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|cases|equation\*?|gather\*?)\}\s*(?:\$|\$\$)?|(?<!\\\\)\$(?![\s\$]).*?(?<!\\\\)\$)/s';
+
+		$text = preg_replace_callback( $math_pattern, function ( $matches ) use ( &$math_blocks ) {
+			$idx   = count( $math_blocks );
+			$block = trim( $matches[0] );
+			if ( strpos( $block, '\\begin{' ) !== false ) {
+				$inner = preg_replace( '/^\$+|\$+$/', '', $block );
+				$block = "$$\n" . trim( $inner ) . "\n$$";
+			}
+			$math_blocks[] = $block;
+			return "___MATH_BLOCK_{$idx}___";
+		}, $text );
+
+		// 7. Convert standard LaTeX text formatting commands to HTML in text mode
+		for ( $pass = 0; $pass < 3; $pass++ ) {
+			$text = preg_replace( '/\\\\textbf\{([^{}]+)\}/', '<strong>$1</strong>', $text );
+			$text = preg_replace( '/\\\\textit\{([^{}]+)\}/', '<em>$1</em>', $text );
+			$text = preg_replace( '/\\\\emph\{([^{}]+)\}/', '<em>$1</em>', $text );
+			$text = preg_replace( '/\\\\underline\{([^{}]+)\}/', '<u>$1</u>', $text );
+			$text = preg_replace( '/\\\\textcolor\{([^{}]+)\}\{([^{}]+)\}/', '<span style="color:$1;">$2</span>', $text );
+			$text = preg_replace( '/\\\\text\{([^{}]+)\}/', '<span>$1</span>', $text );
+		}
+
+		// 8. Spacing & line breaks in text
+		$text = str_replace( '\newline', '<br>', $text );
+		$text = str_replace( '\quad', '&emsp;', $text );
+		$text = str_replace( '\qquad', '&emsp;&emsp;', $text );
+
+		// 9. If multiline content body, apply wpautop to text segments
+		if ( $is_content_body ) {
+			$text = wpautop( $text );
+		}
+
+		// 10. Sanitize HTML tags on the text structure
+		$text = wp_kses_post( $text );
+
+		// 11. Restore pure math blocks AFTER wp_kses_post
+		foreach ( $math_blocks as $idx => $block ) {
+			$text = str_replace( "___MATH_BLOCK_{$idx}___", $block, $text );
+		}
+
+		// 12. Unwrap block equations from <p> tags and remove empty paragraphs to prevent extra vertical gaps
+		$text = preg_replace( '/<p>\s*(\$\$[\s\S]*?\$\$)\s*<\/p>/i', '$1', $text );
+		$text = preg_replace( '/<p>\s*(\\\\\[[\s\S]*?\\\\\])\s*<\/p>/i', '$1', $text );
+		$text = preg_replace( '/<p>\s*(?:<br\s*\/?>|\s|&nbsp;)*<\/p>/i', '', $text );
+		$text = preg_replace( '/(<br\s*\/?>\s*)+(?=\$\$|\\\\\[)/i', '', $text );
+		$text = preg_replace( '/(\$\$|\\\\\])\s*(<br\s*\/?>\s*)+/i', '$1', $text );
+
+		return $text;
+	}
+
 	protected function render() {
 		$s = $this->get_settings_for_display();
 
@@ -2102,7 +2280,7 @@ class Topic_Notes_Widget extends Widget_Base {
 			'breadcrumb_home_label' => 'Notes',
 			'breadcrumb_separator'  => '/',
 			'show_toc'              => 'yes',
-			'toc_title'             => 'On this page',
+			'toc_title'             => 'ON THIS PAGE',
 			'show_chapter_eyebrow'  => 'yes',
 			'show_summary'          => 'yes',
 			'enable_navigation'     => 'yes',
@@ -2189,28 +2367,54 @@ class Topic_Notes_Widget extends Widget_Base {
 			}
 		}
 
-		// Generate TOC items from Chapters & Sub Sections
+		// Generate TOC items from Chapters & Sub Sections starting from first section
 		$toc_items = [];
+		$item_number = 1;
+		$has_multiple_chapters = count( $chapters_data ) > 1;
+
 		foreach ( $chapters_data as $c_idx => $ch ) {
 			$ch_id    = 'tn-chapter-' . sanitize_title( $ch['title'] ?? 'chapter-' . $c_idx );
 			$ch_title = $ch['title'] ?? 'Overview';
+			$subsections = ( isset( $ch['subsections'] ) && is_array( $ch['subsections'] ) ) ? $ch['subsections'] : [];
 
-			$toc_items[] = [
-				'id'     => $ch_id,
-				'title'  => $ch_title,
-				'is_sub' => false,
-			];
+			if ( $has_multiple_chapters && ! empty( $ch['title'] ) && 'Overview' !== $ch['title'] ) {
+				$toc_items[] = [
+					'id'     => $ch_id,
+					'title'  => $ch_title,
+					'is_sub' => false,
+				];
+			}
 
-			if ( ! empty( $ch['subsections'] ) && is_array( $ch['subsections'] ) ) {
-				foreach ( $ch['subsections'] as $s_idx => $sub ) {
+			if ( ! empty( $subsections ) ) {
+				foreach ( $subsections as $s_idx => $sub ) {
 					$sub_id    = 'tn-sub-' . sanitize_title( ( $sub['title'] ?? 'sub' ) . '-' . $c_idx . '-' . $s_idx );
-					$sub_title = $sub['title'] ?? 'Sub Section';
+					$raw_title = $sub['title'] ?? 'Section ' . $item_number;
+					
+					$display_title = $raw_title;
+					if ( ! preg_match( '/^\d+[\.\)]\s*/', $display_title ) ) {
+						$display_title = $item_number . '. ' . $display_title;
+					}
+					$item_number++;
+
 					$toc_items[] = [
 						'id'     => $sub_id,
-						'title'  => $sub_title,
-						'is_sub' => true,
+						'title'  => $display_title,
+						'is_sub' => $has_multiple_chapters,
 					];
 				}
+			} else {
+				$raw_title = $ch_title;
+				$display_title = $raw_title;
+				if ( ! preg_match( '/^\d+[\.\)]\s*/', $display_title ) ) {
+					$display_title = $item_number . '. ' . $display_title;
+				}
+				$item_number++;
+
+				$toc_items[] = [
+					'id'     => $ch_id,
+					'title'  => $display_title,
+					'is_sub' => false,
+				];
 			}
 		}
 
@@ -2261,7 +2465,7 @@ class Topic_Notes_Widget extends Widget_Base {
 								<?php foreach ( $toc_items as $item ) : ?>
 									<li class="tn-toc-item <?php echo ! empty( $item['is_sub'] ) ? 'tn-toc-item-sub' : 'tn-toc-item-chapter'; ?>">
 										<a href="#<?php echo esc_attr( $item['id'] ); ?>" class="tn-toc-link">
-											<span class="pp-math-render"><?php echo esc_html( $item['title'] ); ?></span>
+											<span class="pp-math-render"><?php echo wp_kses_post( self::prepare_latex_content( $item['title'] ) ); ?></span>
 										</a>
 									</li>
 								<?php endforeach; ?>
@@ -2273,60 +2477,49 @@ class Topic_Notes_Widget extends Widget_Base {
 				<?php // RIGHT: MAIN CONTENT ?>
 				<main class="tn-main-content">
 
-					<?php // NOTE HEADER ?>
-					<header class="tn-note-header">
-						<?php if ( 'yes' === $s['show_chapter_eyebrow'] && $chapter_name ) : ?>
-							<span class="tn-eyebrow"><?php echo esc_html( $chapter_name ); ?></span>
-						<?php endif; ?>
-
-						<h1 class="tn-main-title"><?php echo esc_html( $title ); ?></h1>
-
-						<?php if ( 'yes' === $s['show_summary'] && ! empty( $summary ) ) : ?>
-							<p class="tn-summary"><?php echo esc_html( $summary ); ?></p>
-						<?php endif; ?>
-					</header>
-
-					<?php // CHAPTER BOXES & ACCORDIONS ?>
+					<?php // INDIVIDUAL SECTION CARD BOXES (Separate Boxes, Directly Visible & Customizable) ?>
 					<div class="tn-sections-body">
 						<?php foreach ( $chapters_data as $c_idx => $ch ) : 
-							$ch_id    = 'tn-chapter-' . sanitize_title( $ch['title'] ?? 'chapter-' . $c_idx );
-							$ch_title = $ch['title'] ?? 'Overview';
+							$ch_id       = 'tn-chapter-' . sanitize_title( $ch['title'] ?? 'chapter-' . $c_idx );
 							$subsections = ( isset( $ch['subsections'] ) && is_array( $ch['subsections'] ) ) ? $ch['subsections'] : [];
 						?>
-							<section id="<?php echo esc_attr( $ch_id ); ?>" class="tn-chapter-box">
-								<!-- Chapter Header / Title -->
-								<div class="tn-chapter-box-header">
-									<h2 class="tn-chapter-title pp-math-render"><?php echo esc_html( $ch_title ); ?></h2>
-								</div>
-
-								<!-- Sub Sections (Accordions) -->
-								<?php if ( ! empty( $subsections ) ) : ?>
-									<div class="tn-subsections-accordions">
-										<?php foreach ( $subsections as $s_idx => $sub ) : 
-											$sub_id = 'tn-sub-' . sanitize_title( ( $sub['title'] ?? 'sub' ) . '-' . $c_idx . '-' . $s_idx );
-											$sub_title = $sub['title'] ?? 'Sub Section';
-										?>
-											<div id="<?php echo esc_attr( $sub_id ); ?>" class="tn-accordion-item" data-sub-id="<?php echo esc_attr( $sub['id'] ?? 'sub_' . $s_idx ); ?>">
-												<button class="tn-accordion-header" type="button" aria-expanded="false">
-													<span class="tn-accordion-title pp-math-render"><?php echo esc_html( $sub_title ); ?></span>
-													<span class="tn-accordion-icon" aria-hidden="true">+</span>
-												</button>
-												<div class="tn-accordion-body" style="display:none;">
-													<div class="tn-accordion-content pp-math-render">
-														<?php echo wp_kses_post( wpautop( $sub['content'] ?? '' ) ); ?>
-													</div>
-												</div>
+							<?php if ( ! empty( $subsections ) ) : ?>
+								<div class="tn-subsections-list">
+									<?php foreach ( $subsections as $s_idx => $sub ) : 
+										$sub_id    = 'tn-sub-' . sanitize_title( ( $sub['title'] ?? 'sub' ) . '-' . $c_idx . '-' . $s_idx );
+										$sub_title = $sub['title'] ?? 'Sub Section';
+									?>
+										<div id="<?php echo esc_attr( $sub_id ); ?>" class="tn-sub-section-card" data-sub-id="<?php echo esc_attr( $sub['id'] ?? 'sub_' . $s_idx ); ?>">
+											<div class="tn-sub-section-header">
+												<h3 class="tn-sub-section-title pp-math-render"><?php echo wp_kses_post( self::prepare_latex_content( $sub_title ) ); ?></h3>
 											</div>
-										<?php endforeach; ?>
+											<div class="tn-sub-section-content pp-math-render">
+												<?php echo wp_kses_post( self::prepare_latex_content( $sub['content'] ?? '', true ) ); ?>
+											</div>
+										</div>
+									<?php endforeach; ?>
+								</div>
+							<?php else : ?>
+								<div id="<?php echo esc_attr( $ch_id ); ?>" class="tn-sub-section-card">
+									<div class="tn-sub-section-header">
+										<h3 class="tn-sub-section-title pp-math-render"><?php echo esc_html( $ch['title'] ?? 'Overview' ); ?></h3>
 									</div>
-								<?php endif; ?>
+									<div class="tn-sub-section-content pp-math-render">
+										<?php 
+										if ( ! empty( $ch['content'] ) ) {
+											echo wp_kses_post( self::prepare_latex_content( $ch['content'], true ) );
+										}
+										?>
+									</div>
+								</div>
+							<?php endif; ?>
 
 								<!-- Optional: Definition Block -->
 								<?php if ( ! empty( $ch['definition']['enabled'] ) && ! empty( $ch['definition']['content'] ) ) : ?>
 									<div class="tn-definition-card">
 										<span class="tn-definition-label"><?php esc_html_e( 'Definition', 'practice-problems-el' ); ?></span>
 										<div class="tn-definition-content pp-math-render">
-											<?php echo wp_kses_post( wpautop( $ch['definition']['content'] ) ); ?>
+											<?php echo wp_kses_post( self::prepare_latex_content( $ch['definition']['content'], true ) ); ?>
 										</div>
 									</div>
 								<?php endif; ?>
@@ -2341,7 +2534,7 @@ class Topic_Notes_Widget extends Widget_Base {
 											$$<?php echo esc_html( trim( $ch['formula']['formula'], '$' ) ); ?>$$
 										</div>
 										<?php if ( ! empty( $ch['formula']['explanation'] ) ) : ?>
-											<p class="tn-formula-explanation pp-math-render"><?php echo wp_kses_post( $ch['formula']['explanation'] ); ?></p>
+											<div class="tn-formula-explanation pp-math-render"><?php echo wp_kses_post( self::prepare_latex_content( $ch['formula']['explanation'] ) ); ?></div>
 										<?php endif; ?>
 									</div>
 								<?php endif; ?>
@@ -2356,7 +2549,7 @@ class Topic_Notes_Widget extends Widget_Base {
 											<div class="tn-example-problem">
 												<strong><?php esc_html_e( 'Question:', 'practice-problems-el' ); ?></strong>
 												<div class="tn-example-problem-text pp-math-render">
-													<?php echo wp_kses_post( wpautop( $ch['worked_example']['problem'] ) ); ?>
+													<?php echo wp_kses_post( self::prepare_latex_content( $ch['worked_example']['problem'], true ) ); ?>
 												</div>
 											</div>
 										<?php endif; ?>
@@ -2364,7 +2557,7 @@ class Topic_Notes_Widget extends Widget_Base {
 											<div class="tn-example-solution-box">
 												<span class="tn-example-solution-label"><?php esc_html_e( 'Solution / Result:', 'practice-problems-el' ); ?></span>
 												<div class="tn-example-solution-value pp-math-render">
-													<?php echo wp_kses_post( wpautop( $ch['worked_example']['solution'] ) ); ?>
+													<?php echo wp_kses_post( self::prepare_latex_content( $ch['worked_example']['solution'], true ) ); ?>
 												</div>
 											</div>
 										<?php endif; ?>
